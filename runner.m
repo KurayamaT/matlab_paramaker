@@ -9,6 +9,7 @@ clc
 clear gloval
 close all
 format long
+delete *.csv
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -32,7 +33,6 @@ gam       = [5.81776E-05	0.000116355	0.000174533	0.000232711	0.000290888	0.00034
 
 
 for i = 1:length(theta_rad)
-
     for j = 1:length(theta_dot)
         for k = 1:length(gam)
 
