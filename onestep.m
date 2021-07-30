@@ -10,8 +10,10 @@ r = walker.r;  g = walker.g; gam = walker.gam;
 
 
     % for save onstep data.
+    str_q1 = num2str(z0(1));
+    str_u1 = num2str(z0(2));
     str_gam = num2str(gam);
-    fname2 = append('onestep_parameter_gam_',str_gam,'.csv');
+    fname2 = append('onestep_parameter_',str_q1,'_',str_u1,'_',str_gam,'.csv');
 
 
 flag = 1;
