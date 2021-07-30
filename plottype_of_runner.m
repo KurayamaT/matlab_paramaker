@@ -1,35 +1,11 @@
-% make initial parameters [q1(sheta), u1(sheta-dot), g(gamma)] with the range of defined value.
-
-function marged_runner_and_paramaker(q_start, q_end, q_points, u_start, u_end, u_points, gam_start, gam_end, gam_points);
-%%%実行するときはここで定義しているfunction名はあまり関係なかったりする。ファイル名そのものに依存。
-
-format long
-
-delete q1.mat;
-delete u1.mat;
-delete gam.mat;
-
-q  = (q_start:(q_end-q_start)/q_points:q_end);
-u  = (u_start:(u_end-u_start)/u_points:u_end);
-gam = (gam_start:(gam_end-gam_start)/gam_points:gam_end);
-
-save q1.mat q;
-save u1.mat u;
-save gam.mat gam;
-
-%run(runner);
-
-% paramaker(0.017453293,0.13962634,10,0.017453293,0.13962634,10,5.81776E-05,0.000523599,10)
-% marged_runner_and_paramaker(0.017453293,0.13962634,10,0.017453293,0.13962634,10,5.81776E-05,0.000523599,10)
-
 % This is the primary function named "runner.m".
 % 引数：θ、θdot、γが引数。
 % 出力：コマンドラインに”fixedpoint”を表示、一歩分の周期データをcsvで出力
 % 必要な関数：ODE113, FSOLVE, INTERP1. 
 
-%function runner
+function runner(q,u,gam)
 
-delete *.csv
+delete *.csv 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -49,9 +25,9 @@ delete *.csv
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-load q1.mat;  % q1
-load u1.mat;  % u1
-load gam.mat; % gam
+% load q1.mat;  % q1
+% load u1.mat;  % u1
+% load gam.mat; % gam
 
 
 for i = 1:length(q)
@@ -108,7 +84,7 @@ else
     str_zstar = append('Fixed point =, ' , str_zstar);
     disp(str_zstar);
     disp (str_gam);
-    disp('A Motion data was exported as a CSV file.')
+    disp('export motion data as a CSV file.')
     %disp(theta_dot);
 end
 
