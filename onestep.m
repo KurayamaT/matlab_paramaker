@@ -8,13 +8,13 @@ M = walker.M;  m = walker.m; I = walker.I;
 l = walker.l;  c = walker.c; w = walker.w;   
 r = walker.r;  g = walker.g; gam = walker.gam;
 
-
+%%% written by TK %%%
     % for save onstep data.
     str_q1 = num2str(z0(1));
     str_u1 = num2str(z0(2));
     str_gam = num2str(gam);
     fname2 = append('onestep_parameter_',str_q1,'_',str_u1,'_',str_gam,'.csv');
-
+%%%%%%%%%%%%%%%%%%%%%%%
 
 flag = 1;
 if nargin<2
@@ -68,5 +68,9 @@ z = zplus(1:4);
 if flag==1
    z=z_ode;
    t=t_ode;
-   csvwrite(fname2,onestep_parameter);  %% modified by me.   
+   
+   %%% written by TK %%%
+    csvwrite(fname2,onestep_parameter);  
+   %%%%%%%%%%%%%%%%%%%%%
+   
 end
