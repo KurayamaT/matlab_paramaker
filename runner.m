@@ -45,7 +45,7 @@ fps = 10; %Use low frames per second for low gravity
 
 %%%% Root finding, Period one gait %%%%
 options = optimset('TolFun',1e-12,'TolX',1e-12,'Display','off');
-[zstar,fval,exitflag] = fsolve(poincaremap,z0,options,walker);
+[zstar,fval,exitflag] = fsolve(fx,z0,options,walker);
 if exitflag ~= 1
        % error('Root finder not converged, change guess or change system parameters')
 
