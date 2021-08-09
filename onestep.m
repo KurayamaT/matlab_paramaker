@@ -29,8 +29,9 @@ u1 = z0(2);
 q2 = z0(3);
 u2 = z0(4);
 
-    %%%% Derived variables %%%%
+    %%%% Derived variables %%%%　運動エネルギー保存則を使って、差分方程式を定義している（池俣：2.9あたりだが、元の方程式は不明。これを簡単にすると、simplestに近づくと思う）
     TE = 1/2*m*(((-l*cos(q1)-r)*u1-u1*(-c*cos(q1)+w*sin(q1)))^2+(-l*sin(q1)*u1+u1*(c*sin(q1)+w*cos(q1)))^2)+1/2*m*(((-l*cos(q1)-r)*u1-(u1-u2)*(-c*cos(q1-q2)+w*sin(q1-q2)))^2+(-l*sin(q1)*u1+(u1-u2)*(c*sin(q1-q2)+w*cos(q1-q2)))^2)+1/2*M*((-l*cos(q1)-r)^2*u1^2+l^2*sin(q1)^2*u1^2)+1/2*I*(u1^2+(u1-u2)^2)+2*m*g*cos(gam)*r+2*m*g*l*cos(gam-q1)-m*g*c*cos(gam-q1)-m*g*w*sin(gam-q1)+2*m*g*sin(gam)*r*q1-m*g*c*cos(gam-q1+q2)-m*g*w*sin(gam-q1+q2)+M*g*cos(gam)*r+M*g*l*cos(gam-q1)+M*g*sin(gam)*r*q1; 
+    %全エネルギー
     xp1 = 0;
     xh = -l*sin(q1) - r*q1 + xp1;
     vxh = (-l*cos(q1)-r)*u1; 

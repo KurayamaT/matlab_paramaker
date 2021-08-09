@@ -1,5 +1,6 @@
 
 %===================================================================
-function zdiff=fixedpt(z0,walker)
+function poincaremap = fixedpt(z0,walker)
 %===================================================================
-zdiff=onestep(z0,walker)-z0; 
+poincaremap = onestep(z0,walker)-z0; 
+%disp(zdiff')
