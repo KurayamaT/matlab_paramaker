@@ -4,3 +4,4 @@ function poincaremap = fixedpt(z0,walker)
 %===================================================================
 poincaremap = onestep(z0,walker)-z0; 
 %disp(zdiff')
+%ここの右辺にある部分が、f（x）として認識される。

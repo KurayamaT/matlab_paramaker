@@ -30,15 +30,16 @@ q2 = z0(3);
 u2 = z0(4);
 
     %%%% Derived variables %%%%　運動エネルギー保存則を使って、差分方程式を定義している（池俣：2.9あたりだが、元の方程式は不明。これを簡単にすると、simplestに近づくと思う）
-    TE = 1/2*m*(((-l*cos(q1)-r)*u1-u1*(-c*cos(q1)+w*sin(q1)))^2+(-l*sin(q1)*u1+u1*(c*sin(q1)+w*cos(q1)))^2)+1/2*m*(((-l*cos(q1)-r)*u1-(u1-u2)*(-c*cos(q1-q2)+w*sin(q1-q2)))^2+(-l*sin(q1)*u1+(u1-u2)*(c*sin(q1-q2)+w*cos(q1-q2)))^2)+1/2*M*((-l*cos(q1)-r)^2*u1^2+l^2*sin(q1)^2*u1^2)+1/2*I*(u1^2+(u1-u2)^2)+2*m*g*cos(gam)*r+2*m*g*l*cos(gam-q1)-m*g*c*cos(gam-q1)-m*g*w*sin(gam-q1)+2*m*g*sin(gam)*r*q1-m*g*c*cos(gam-q1+q2)-m*g*w*sin(gam-q1+q2)+M*g*cos(gam)*r+M*g*l*cos(gam-q1)+M*g*sin(gam)*r*q1; 
-    %全エネルギー
+%     TE = 1/2*m*(((-l*cos(q1)-r)*u1-u1*(-c*cos(q1)+w*sin(q1)))^2+(-l*sin(q1)*u1+u1*(c*sin(q1)+w*cos(q1)))^2)+1/2*m*(((-l*cos(q1)-r)*u1-(u1-u2)*(-c*cos(q1-q2)+w*sin(q1-q2)))^2+(-l*sin(q1)*u1+(u1-u2)*(c*sin(q1-q2)+w*cos(q1-q2)))^2)+1/2*M*((-l*cos(q1)-r)^2*u1^2+l^2*sin(q1)^2*u1^2)+1/2*I*(u1^2+(u1-u2)^2)+2*m*g*cos(gam)*r+2*m*g*l*cos(gam-q1)-m*g*c*cos(gam-q1)-m*g*w*sin(gam-q1)+2*m*g*sin(gam)*r*q1-m*g*c*cos(gam-q1+q2)-m*g*w*sin(gam-q1+q2)+M*g*cos(gam)*r+M*g*l*cos(gam-q1)+M*g*sin(gam)*r*q1; 
+    TE = 1/2*m*(-l*cos(q1))*u1-u1*(-c*cos(q1)+(-l*sin(q1)*u1+u1*(c*sin(q1)))^2)+1/2*m*(((-l*cos(q1))*u1-(u1-u2)*(-c*cos(q1-q2)))^2+(-l*sin(q1)*u1+(u1-u2)*(c*sin(q1-q2)))^2)+1/2*M*((-l*cos(q1))^2*u1^2+l^2*sin(q1)^2*u1^2)++2*m*g*l*cos(gam-q1)-m*g*c*cos(gam-q1)-m*g*c*cos(gam-q1+q2)+M*g*l*cos(gam-q1) ;
     xp1 = 0;
     xh = -l*sin(q1) - r*q1 + xp1;
     vxh = (-l*cos(q1)-r)*u1; 
     yh =  l*cos(q1) + r;
     vyh = -l*sin(q1)*u1; 
     
-z0 = [q1 u1 q2 u2 TE xh vxh yh vyh];
+% z0 = [q1 u1 q2 u2 TE xh vxh yh vyh];
+z0 = [q1 u1 q2 u2];
 
 t0 = 0; 
 dt = 5; %might need to be changed based on time taken for one step
@@ -46,7 +47,7 @@ time_stamps = 20;
 t_ode = t0;
 z_ode = z0;
 
-%%% solve ODE using 
+%%% ODE solver used.
 
     options=odeset('abstol',1e-13,'reltol',1e-13,'events',@collision);
     tspan = linspace(t0,t0+dt,time_stamps);
@@ -62,10 +63,7 @@ z_ode = z0;
     z_ode = [z_ode; z_temp(2:end,:)];
     onestep_parameter = z_temp(2:end,:);
     
-
-
-
-z = zplus(1:4);
+    z = zplus(1:4);
 
 if flag==1
    z=z_ode;

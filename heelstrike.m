@@ -5,7 +5,7 @@ function zplus=heelstrike(t,z,walker)
 
 r1 = z(1);   v1 = z(2);                         
 r2 = z(3);   v2 = z(4);                         
-xh = z(6);   yh = z(8);                       
+% xh = z(6);   yh = z(8);                       
 
 q1 = r1 - r2;                         
 q2 = -r2;                                       
@@ -37,4 +37,5 @@ TE = 1/2*m*(((-l*cos(q1)-r)*u1-u1*(-c*cos(q1)+w*sin(q1)))^2+(-l*sin(q1)*u1+u1*(c
 vxh = (-l*cos(q1)-r)*u1; 
 vyh = -l*sin(q1)*u1; 
 
-zplus = [q1 u1 q2 u2 TE xh vxh yh vyh];       
+%zplus = [q1 u1 q2 u2 TE xh vxh yh vyh];  
+zplus = [q1 u1 q2 u2 ];       

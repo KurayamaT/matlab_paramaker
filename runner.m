@@ -2,6 +2,8 @@
 % 引数：θ、θdot、γが引数。
 % 出力：コマンドラインに”fixedpoint”を表示、一歩分の周期データをcsvで出力
 % 必要な関数：ODE113, FSOLVE, INTERP1. 
+% プログラム全体の流れ
+
 
 function runner(q,u,gam)
 
@@ -45,7 +47,7 @@ fps = 10; %Use low frames per second for low gravity
 
 %%%% Root finding, Period one gait %%%%
 options = optimset('TolFun',1e-12,'TolX',1e-12,'Display','off');
-[zstar,fval,exitflag] = fsolve(fx,z0,options,walker);
+[zstar,fval,exitflag] = fsolve(@fixedpt,z0,options,walker);
 if exitflag ~= 1
        % error('Root finder not converged, change guess or change system parameters')
 
