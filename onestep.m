@@ -29,14 +29,14 @@ u1 = z0(2);
 q2 = z0(3);
 u2 = z0(4);
 
-    %%%% Derived variables %%%%　運動エネルギー保存則を使って、差分方程式を定義している（池俣：2.9あたりだが、元の方程式は不明。これを簡単にすると、simplestに近づくと思う）
+% %%%% Derived variables %%%%　運動エネルギーだと思うがなぜ出しているのかは良くわからん。とりあえず今回は不要。
 %     TE = 1/2*m*(((-l*cos(q1)-r)*u1-u1*(-c*cos(q1)+w*sin(q1)))^2+(-l*sin(q1)*u1+u1*(c*sin(q1)+w*cos(q1)))^2)+1/2*m*(((-l*cos(q1)-r)*u1-(u1-u2)*(-c*cos(q1-q2)+w*sin(q1-q2)))^2+(-l*sin(q1)*u1+(u1-u2)*(c*sin(q1-q2)+w*cos(q1-q2)))^2)+1/2*M*((-l*cos(q1)-r)^2*u1^2+l^2*sin(q1)^2*u1^2)+1/2*I*(u1^2+(u1-u2)^2)+2*m*g*cos(gam)*r+2*m*g*l*cos(gam-q1)-m*g*c*cos(gam-q1)-m*g*w*sin(gam-q1)+2*m*g*sin(gam)*r*q1-m*g*c*cos(gam-q1+q2)-m*g*w*sin(gam-q1+q2)+M*g*cos(gam)*r+M*g*l*cos(gam-q1)+M*g*sin(gam)*r*q1; 
-    TE = 1/2*m*(-l*cos(q1))*u1-u1*(-c*cos(q1)+(-l*sin(q1)*u1+u1*(c*sin(q1)))^2)+1/2*m*(((-l*cos(q1))*u1-(u1-u2)*(-c*cos(q1-q2)))^2+(-l*sin(q1)*u1+(u1-u2)*(c*sin(q1-q2)))^2)+1/2*M*((-l*cos(q1))^2*u1^2+l^2*sin(q1)^2*u1^2)++2*m*g*l*cos(gam-q1)-m*g*c*cos(gam-q1)-m*g*c*cos(gam-q1+q2)+M*g*l*cos(gam-q1) ;
-    xp1 = 0;
-    xh = -l*sin(q1) - r*q1 + xp1;
-    vxh = (-l*cos(q1)-r)*u1; 
-    yh =  l*cos(q1) + r;
-    vyh = -l*sin(q1)*u1; 
+%     TE = 1/2*m*(-l*cos(q1))*u1-u1*(-c*cos(q1)+(-l*sin(q1)*u1+u1*(c*sin(q1)))^2)+1/2*m*(((-l*cos(q1))*u1-(u1-u2)*(-c*cos(q1-q2)))^2+(-l*sin(q1)*u1+(u1-u2)*(c*sin(q1-q2)))^2)+1/2*M*((-l*cos(q1))^2*u1^2+l^2*sin(q1)^2*u1^2)++2*m*g*l*cos(gam-q1)-m*g*c*cos(gam-q1)-m*g*c*cos(gam-q1+q2)+M*g*l*cos(gam-q1) ;
+%     xp1 = 0;
+%     xh = -l*sin(q1) - r*q1 + xp1;
+%     vxh = (-l*cos(q1)-r)*u1; 
+%     yh =  l*cos(q1) + r;
+%     vyh = -l*sin(q1)*u1; 
     
 % z0 = [q1 u1 q2 u2 TE xh vxh yh vyh];
 z0 = [q1 u1 q2 u2];
@@ -50,19 +50,25 @@ z_ode = z0;
 %%% ODE solver used.
 
     options=odeset('abstol',1e-13,'reltol',1e-13,'events',@collision);
+    %@collision関数で設定された条件（event）で計算停止を指示。
     tspan = linspace(t0,t0+dt,time_stamps);
     [t_temp, z_temp] = ode113(@single_stance,tspan,z0,options,walker);
     
-    zplus=heelstrike(t_temp(end),z_temp(end,:),walker); %　>>最終項を付けている
+    % call heelstrike 
+    zplus=heelstrike(t_temp(end),z_temp(end,:),walker); %　>>最終行を付加。
     
-    %z0 = zplus;
-    %t0 = t_temp(end);
+    %%%次の回転の初期値。一周しかしない場合は不要%%%
+    z0 = zplus;
+    t0 = t_temp(end);
     
     %%%%% Ignore time stamps for heelstrike and first integration point
     t_ode = [t_ode; t_temp(2:end)];
     z_ode = [z_ode; z_temp(2:end,:)];
-    onestep_parameter = z_temp(2:end,:);
     
+    %%% written by TK %%%
+    onestep_parameter = z_temp(2:end,:);
+    %%%%%%%%%%%%%%%%%%%%%
+
     z = zplus(1:4);
 
 if flag==1
