@@ -45,22 +45,23 @@ time_stamps = 20;
 t_ode = t0;
 z_ode = z0;
 
-for i=1:steps
+%%% solve ODE using 
+
     options=odeset('abstol',1e-13,'reltol',1e-13,'events',@collision);
     tspan = linspace(t0,t0+dt,time_stamps);
     [t_temp, z_temp] = ode113(@single_stance,tspan,z0,options,walker);
     
-    zplus=heelstrike(t_temp(end),z_temp(end,:),walker); 
+    zplus=heelstrike(t_temp(end),z_temp(end,:),walker); %　>>最終項を付けている
     
-    z0 = zplus;
-    t0 = t_temp(end);
+    %z0 = zplus;
+    %t0 = t_temp(end);
     
     %%%%% Ignore time stamps for heelstrike and first integration point
     t_ode = [t_ode; t_temp(2:end)];
     z_ode = [z_ode; z_temp(2:end,:)];
     onestep_parameter = z_temp(2:end,:);
     
-end
+
 
 
 z = zplus(1:4);
