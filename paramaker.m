@@ -9,9 +9,9 @@ format long;
 % delete u1.mat;
 % delete gam.mat;
 
-q  = (q_start:(q_end-q_start)/q_points:q_end);
-u  = (u_start:(u_end-u_start)/u_points:u_end);
-gam = (gam_start:(gam_end-gam_start)/gam_points:gam_end);
+q  = q_start:(q_end-q_start)/q_points:q_end;
+u  = u_start:(u_end-u_start)/u_points:u_end;
+gam = gam_start:(gam_end-gam_start)/gam_points:gam_end;
 
 passivewalker_k(q,u,gam)
 % save q1.mat q;

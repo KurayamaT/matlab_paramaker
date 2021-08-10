@@ -4,16 +4,12 @@
 % 必要な関数：ODE113, FSOLVE, INTERP1. 
 % プログラム全体の流れ
 
-
 function passivewalker_k(q,u,gam)
+
+tic
 
 delete *.csv 
 
-for i = 1:length(q)
-    for j = 1:length(u)
-        for k = 1:length(gam)
-
-%%%%% To get results close to Garcia's walker increase M %%%%%%
     walker.M = 1000;
     walker.m = 1.0;
     walker.I = 0.00;
@@ -22,9 +18,22 @@ for i = 1:length(q)
     walker.c = 1.0;
     walker.r = 0.0;
     walker.g = 1.0;
+    
+for k = 1:length(gam)
+%     first = num2str(k);
     walker.gam = gam(k);
     str_gam = num2str(walker.gam);
     str_gam = append('gam, ',str_gam);
+    
+    parfor i = 1:length(q)
+%         second = num2str(i);
+        for j = 1:length(u)
+%             third = num2str(j);
+            kij = append(num2str(k),'_',num2str(i),'_',num2str(j));
+            disp(kij)
+            
+%%%%% To get results close to Garcia's walker increase M %%%%%%
+    
     
     %%%% Initial State %%%%%
     q1 =  q(i);
@@ -32,14 +41,13 @@ for i = 1:length(q)
     q2 =  2*q1; % φ　　 最初の股角度
     u2 =  -1*u1*(1-cos(q2)); % φdot 最初の股角速度
     z0 = [q1 u1 q2 u2];
-    
+        
     %%%
     str_q1 = num2str(q1);
     str_u1 = num2str(u1);
     str_q2 = num2str(q2);
     str_u2 = num2str(u2);
-    str_z0 = append('z0 =,  ',str_q1,',',str_u1,',',str_q2,',',str_u2);
-    
+    str_z0 = append('z0 =,  ',str_q1,',',str_u1,',',str_q2,',',str_u2);    
 
 %%%%%%%%%%%%%%%%%%%%%%%%%
 steps = 1; %number of steps to animate
@@ -47,7 +55,7 @@ fps = 10; %Use low frames per second for low gravity
 
 %%%% Root finding, Period one gait %%%%
 options = optimset('TolFun',1e-12,'TolX',1e-12,'Display','off');
-[zstar,fval,exitflag] = fsolve(@fixedpt,z0,options,walker);
+[zstar,~,exitflag] = fsolve(@fixedpt,z0,options,walker);
 if exitflag ~= 1
        % error('Root finder not converged, change guess or change system parameters')
 
@@ -60,46 +68,57 @@ else
     disp(str_zstar);
     %disp (str_gam);
     disp('Motion data were exported as a CSV file.')
+    disp(str_z0)
     %disp(theta_dot);
 end
 
 %%% Stability, using eigenvalues of Poincare map %%%
 J=partialder(@onestep,zstar,walker);
-% disp('EigenValues for linearized map are');
-% eig(J)
+disp('EigenValues for linearized map are');
+eig(J)
  
-%%%% Get data for all the steps %%%
-[z,t] = onestep(zstar,walker,steps);
-
-
+%%%% Get data of leg motion. %%%
+ csv_filename = filenamer(z0,kij);
+ [z,t] = onestep(zstar,walker,steps);
+ onestep_parameter = z;
+ csvwrite(csv_filename,onestep_parameter);   
+ 
         end
-    end
+    end   
 end
-
+toc
 
 %===================================================================
 function poincaremap = fixedpt(z0,walker)
 %===================================================================
 poincaremap = onestep(z0,walker)-z0; 
 %disp(zdiff')
-%ここの右辺にある部分が、f（x）として認識される。
-
-
+%ここの右辺にある部分が、f(x)として認識され、fsolveで球解される。
 
 %===================================================================
-function [z,t]=onestep(z0,walker,steps)
-%===================================================================
-
-M = walker.M;  m = walker.m; I = walker.I;   
-l = walker.l;  c = walker.c; w = walker.w;   
-r = walker.r;  g = walker.g; gam = walker.gam;
-
-%%% written by TK %%%
-    % for save onstep data.
-    str_q1 = num2str(z0(1));
+% データ保存用csvのファイル名を決定
+function csv_filename = filenamer(z0,gam)
+str_q1 = num2str(z0(1));
     str_u1 = num2str(z0(2));
     str_gam = num2str(gam);
-    fname2 = append('onestep_parameter_',str_q1,'_',str_u1,'_',str_gam,'.csv');
+    csv_filename = append('onestep_parameter_',str_q1,'_',str_u1,'_',str_gam,'.csv');
+%===================================================================
+
+%===================================================================
+function [z,t]=onestep(z0,walker,~)
+%===================================================================
+% 
+% M = walker.M;  m = walker.m; I = walker.I;   
+% l = walker.l;  c = walker.c; w = walker.w;   
+% r = walker.r;  g = walker.g; 
+
+gam = walker.gam;
+
+%%% written by TK %%%
+ 
+    % for save onstep data.
+    
+%     disp(fname2)
 %%%%%%%%%%%%%%%%%%%%%%%
 
 flag = 1;
@@ -107,7 +126,7 @@ if nargin<2
     error('need more inputs to onestep');
 elseif nargin<3
     flag = 0; %send only last state, for root finder and jacobian
-    steps = 1;
+%     steps = 1;
 end
 
 q1 = z0(1);
@@ -157,13 +176,16 @@ z_ode = z0;
 
     z = zplus(1:4);
 
+    %%% Stability, using eigenvalues of Poincare map %%%
+    
 if flag==1
    z=z_ode;
    t=t_ode;
    
-   %%% written by TK %%%
-    csvwrite(fname2,onestep_parameter);  
-   %%%%%%%%%%%%%%%%%%%%%
+%    %%% written by TK %%%
+%    onestep_parameter = z;
+%    csvwrite(fname2,onestep_parameter);     
+%    %%%%%%%%%%%%%%%%%%%%%
    
 end
 
@@ -305,5 +327,4 @@ for i=1:n
     J(:,i)=(feval(FUN,ztemp1,walker)-feval(FUN,ztemp2,walker)) ;
 end
 J=J/(2*pert);
-
 
