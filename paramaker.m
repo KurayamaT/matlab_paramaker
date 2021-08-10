@@ -13,7 +13,7 @@ q  = (q_start:(q_end-q_start)/q_points:q_end);
 u  = (u_start:(u_end-u_start)/u_points:u_end);
 gam = (gam_start:(gam_end-gam_start)/gam_points:gam_end);
 
-runner(q,u,gam)
+passivewalker_k(q,u,gam)
 % save q1.mat q;
 % save u1.mat u;
 % save gam.mat gam;
