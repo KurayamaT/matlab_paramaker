@@ -286,9 +286,9 @@ zplus = [q1 u1 q2 u2 ];
 function [gstop, isterminal,direction]=collision(t,z,walker)
 %===================================================================
 
-M = walker.M;  m = walker.m; I = walker.I;   
-l = walker.l;  c = walker.c; w = walker.w;   
-r = walker.r;  g = walker.g; gam = walker.gam; 
+% M = walker.M;  m = walker.m; I = walker.I;   
+% l = walker.l;  c = walker.c; w = walker.w;   
+% r = walker.r;  g = walker.g; gam = walker.gam; 
 
 q1 = z(1); q2 = z(3); 
 
