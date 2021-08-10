@@ -22,8 +22,8 @@ delete *.csv
 for k = 1:length(gam)
 %     first = num2str(k);
     walker.gam = gam(k);
-    str_gam = num2str(walker.gam);
-    str_gam = append('gam, ',str_gam);
+%     str_gam = num2str(walker.gam);
+%     str_gam = append('gam, ',str_gam);
     
     parfor i = 1:length(q)
 %         second = num2str(i);
@@ -51,7 +51,7 @@ for k = 1:length(gam)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%
 steps = 1; %number of steps to animate
-fps = 10; %Use low frames per second for low gravity
+% fps = 10; %Use low frames per second for low gravity
 
 %%%% Root finding, Period one gait %%%%
 options = optimset('TolFun',1e-12,'TolX',1e-12,'Display','off');
@@ -79,7 +79,7 @@ eig(J)
  
 %%%% Get data of leg motion. %%%
  csv_filename = filenamer(z0,kij);
- [z,t] = onestep(zstar,walker,steps);
+ [z,~] = onestep(zstar,walker,steps);
  onestep_parameter = z;
  csvwrite(csv_filename,onestep_parameter);   
  
@@ -110,9 +110,7 @@ function [z,t]=onestep(z0,walker,~)
 % 
 % M = walker.M;  m = walker.m; I = walker.I;   
 % l = walker.l;  c = walker.c; w = walker.w;   
-% r = walker.r;  g = walker.g; 
-
-gam = walker.gam;
+% r = walker.r;  g = walker.g; gam = walker.gam;
 
 %%% written by TK %%%
  
@@ -163,17 +161,12 @@ z_ode = z0;
     zplus=heelstrike(t_temp(end),z_temp(end,:),walker); %　>>最終行を付加。
     
     %%%次の回転の初期値。一周しかしない場合は不要%%%
-    z0 = zplus;
-    t0 = t_temp(end);
+%     z0 = zplus;
+%     t0 = t_temp(end);
     
     %%%%% Ignore time stamps for heelstrike and first integration point
     t_ode = [t_ode; t_temp(2:end)];
     z_ode = [z_ode; z_temp(2:end,:)];
-    
-    %%% written by TK %%%
-    onestep_parameter = z_temp(2:end,:);
-    %%%%%%%%%%%%%%%%%%%%%
-
     z = zplus(1:4);
 
     %%% Stability, using eigenvalues of Poincare map %%%
@@ -191,7 +184,7 @@ end
 
 %%% 運動方程式の担当 %%%
 %===================================================================
-function zdot=single_stance(t,z,walker)  
+function zdot=single_stance(~,z,walker)  
 %===================================================================
 
 q1 = z(1);   u1 = z(2);                         
@@ -231,7 +224,7 @@ ud1 = X(1);  % θ''
 ud2 = X(2);  % φ''                                     
 
 % DTE>>分解して少し書き出してみたがなんのことか良くわからん.今求めている計算過程では以下の要素は不要。axh、ayhも同様。
-%　DTE = -ud1*I*u2+2*ud1*m*u1*r^2+m*u1*r*u2^2*c*sin(q1-q2)+m*u1*r*u2^2*w*cos(q1-q2)-m*u2^2*l*u1*c*sin(q2)+u2*m*g*c*sin(gam-q1+q2)-u2*m*g*w*cos(gam-q1+q2)+2*ud1*I*u1+ud2*I*u2+m*u2^2*l*u1*w*cos(q2)+2*ud1*m*u1*c^2+ud2*m*u2*c^2-ud2*I*u1+ud1*m*u2*c*l*cos(q2)+ud1*m*u2*w*l*sin(q2)-2*ud1*m*u1*l*c*cos(q2)-2*ud1*m*l*u1*w*sin(q2)-m*u2*u1^2*w*l*cos(q2)+m*u2*u1^2*c*l*sin(q2)+2*ud1*m*u1*w^2+ud2*m*u2*w^2+ud2*m*u1*l*c*cos(q2)+ud1*M*l^2*u1-ud2*m*u1*w^2-ud1*m*u2*c^2-ud2*m*u1*c^2+2*ud1*m*l^2*u1-ud1*m*u2*w^2-2*ud1*m*l*u1*c+2*ud1*M*l*cos(q1)*u1*r+4*ud1*m*l*cos(q1)*u1*r-2*ud1*m*u1*r*c*cos(q1)+2*ud1*m*u1*r*w*sin(q1)-2*ud1*m*u1*r*c*cos(q1-q2)-2*m*u1^3*r*l*sin(q1)+m*u1^3*r*c*sin(q1)+m*u1^3*r*w*cos(q1)+m*u1^3*r*c*sin(q1-q2)+m*u1^3*r*w*cos(q1-q2)-2*m*u1^2*r*u2*c*sin(q1-q2)-2*m*u1^2*r*u2*w*cos(q1-q2)-M*u1^3*r*l*sin(q1)+2*u1*m*g*l*sin(gam-q1)-u1*m*g*c*sin(gam-q1)+u1*m*g*w*cos(gam-q1)+2*u1*m*g*sin(gam)*r+ud2*m*l*u1*w*sin(q2)+ud1*M*u1*r^2-u1*m*g*c*sin(gam-q1+q2)+u1*m*g*w*cos(gam-q1+q2)+u1*M*g*l*sin(gam-q1)+u1*M*g*sin(gam)*r+2*ud1*m*u1*r*w*sin(q1-q2)+ud1*m*u2*c*cos(q1-q2)*r-ud1*m*u2*w*sin(q1-q2)*r+ud2*m*u1*r*c*cos(q1-q2)-ud2*m*u1*r*w*sin(q1-q2); 
+% DTE = -ud1*I*u2+2*ud1*m*u1*r^2+m*u1*r*u2^2*c*sin(q1-q2)+m*u1*r*u2^2*w*cos(q1-q2)-m*u2^2*l*u1*c*sin(q2)+u2*m*g*c*sin(gam-q1+q2)-u2*m*g*w*cos(gam-q1+q2)+2*ud1*I*u1+ud2*I*u2+m*u2^2*l*u1*w*cos(q2)+2*ud1*m*u1*c^2+ud2*m*u2*c^2-ud2*I*u1+ud1*m*u2*c*l*cos(q2)+ud1*m*u2*w*l*sin(q2)-2*ud1*m*u1*l*c*cos(q2)-2*ud1*m*l*u1*w*sin(q2)-m*u2*u1^2*w*l*cos(q2)+m*u2*u1^2*c*l*sin(q2)+2*ud1*m*u1*w^2+ud2*m*u2*w^2+ud2*m*u1*l*c*cos(q2)+ud1*M*l^2*u1-ud2*m*u1*w^2-ud1*m*u2*c^2-ud2*m*u1*c^2+2*ud1*m*l^2*u1-ud1*m*u2*w^2-2*ud1*m*l*u1*c+2*ud1*M*l*cos(q1)*u1*r+4*ud1*m*l*cos(q1)*u1*r-2*ud1*m*u1*r*c*cos(q1)+2*ud1*m*u1*r*w*sin(q1)-2*ud1*m*u1*r*c*cos(q1-q2)-2*m*u1^3*r*l*sin(q1)+m*u1^3*r*c*sin(q1)+m*u1^3*r*w*cos(q1)+m*u1^3*r*c*sin(q1-q2)+m*u1^3*r*w*cos(q1-q2)-2*m*u1^2*r*u2*c*sin(q1-q2)-2*m*u1^2*r*u2*w*cos(q1-q2)-M*u1^3*r*l*sin(q1)+2*u1*m*g*l*sin(gam-q1)-u1*m*g*c*sin(gam-q1)+u1*m*g*w*cos(gam-q1)+2*u1*m*g*sin(gam)*r+ud2*m*l*u1*w*sin(q2)+ud1*M*u1*r^2-u1*m*g*c*sin(gam-q1+q2)+u1*m*g*w*cos(gam-q1+q2)+u1*M*g*l*sin(gam-q1)+u1*M*g*sin(gam)*r+2*ud1*m*u1*r*w*sin(q1-q2)+ud1*m*u2*c*cos(q1-q2)*r-ud1*m*u2*w*sin(q1-q2)*r+ud2*m*u1*r*c*cos(q1-q2)-ud2*m*u1*r*w*sin(q1-q2); 
 % axh = l*sin(q1)*u1^2+(-l*cos(q1)-r)*ud1; 
 % ayh = -l*cos(q1)*u1^2-l*sin(q1)*ud1; 
 
@@ -240,7 +233,7 @@ ud2 = X(2);  % φ''
 zdot = [u1 ud1 u2 ud2]';  %[θ’ θ'' φ’ φ''　 ]
 
 %===================================================================
-function zplus=heelstrike(t,z,walker)      
+function zplus=heelstrike(~,z,walker)      
 %===================================================================
 
 r1 = z(1);   v1 = z(2);                         
@@ -252,7 +245,8 @@ q2 = -r2;
 
 M = walker.M;  m = walker.m; I = walker.I;   
 l = walker.l;  c = walker.c; w = walker.w;   
-r = walker.r;  g = walker.g; gam = walker.gam; 
+r = walker.r;  
+% g = walker.g; gam = walker.gam; 
 
 M11 = 2*m*l^2-2*m*l*c+2*m*c^2+2*m*w^2+2*m*r^2+4*m*r*l*cos(q1)-2*m*r*c*cos(q1)+2*m*w*sin(q1)*r-2*m*l*c*cos(q2)-2*m*l*w*sin(q2)-2*m*r*c*cos(q1-q2)+2*m*sin(q1-q2)*w*r+M*l^2+2*M*r*l*cos(q1)+M*r^2+2*I; 
 M12 = m*l*c*cos(q2)+m*l*w*sin(q2)-m*c^2-m*w^2+m*r*c*cos(q1-q2)-m*sin(q1-q2)*w*r-I; 
@@ -283,7 +277,7 @@ zplus = [q1 u1 q2 u2 ];
 
 
 %===================================================================
-function [gstop, isterminal,direction]=collision(t,z,walker)
+function [gstop, isterminal,direction]=collision(~,z,~)
 %===================================================================
 
 % M = walker.M;  m = walker.m; I = walker.I;   
