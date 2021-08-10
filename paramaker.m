@@ -26,4 +26,3 @@ runner(q,u,gam)
 
 
 
-
