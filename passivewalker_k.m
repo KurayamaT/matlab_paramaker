@@ -20,21 +20,11 @@ delete *.csv
 %     walker.g = 1.0;
 
 parfor k = 1:length(gamma)
-
-    %     first = num2str(k);
-    gam = gamma(k);
-%     str_gam = num2str(walker.gam);
-%     str_gam = append('gam, ',str_gam);
-    
     for i = 1:length(q)
-%         second = num2str(i);
         for j = 1:length(u)
-%             third = num2str(j);
             kij = append(num2str(k),'_',num2str(i),'_',num2str(j));
             disp(kij)
-            
-%%%%% To get results close to Garcia's walker increase M %%%%%%
-    
+                
     
     %%%% Initial State %%%%%
     q1 =  q(i);
@@ -42,7 +32,7 @@ parfor k = 1:length(gamma)
     q2 =  2*q1; % φ　　 最初の股角度
     u2 =  -1*u1*(1-cos(q2)); % φdot 最初の股角速度
     z0 = [q1 u1 q2 u2];
-        
+    gam = gamma(k); 
     %%%
     str_q1 = num2str(q1);
     str_u1 = num2str(u1);
@@ -58,25 +48,19 @@ steps = 1; %number of steps to animate
 options = optimset('TolFun',1e-12,'TolX',1e-12,'Display','off');
 [zstar,~,exitflag] = fsolve(@fixedpt,z0,options,gam);
 if exitflag ~= 1
-       % error('Root finder not converged, change guess or change system parameters')
-
     continue
-
 else
-    %disp(str_z0);
     str_zstar = num2str(zstar);
     str_zstar = append('Fixed point = ' , str_zstar);
     disp(str_zstar);
-    %disp (str_gam);
     disp('Motion data were exported as a CSV file.')
     disp(str_z0)
-    %disp(theta_dot);
 end
 
 %%% Stability, using eigenvalues of Poincare map %%%
 J=partialder(@onestep,zstar,gam);
-disp('EigenValues for linearized map are');
-eig(J)
+% disp('EigenValues for linearized map are');
+eig(J);
  
 %%%% Get data of leg motion. %%%
  csv_filename = filenamer(z0,kij);
@@ -108,20 +92,6 @@ str_q1 = num2str(z0(1));
 %===================================================================
 function [z,t]=onestep(z0,gam,~)
 %===================================================================
-% 
-% M = walker.M;  m = walker.m; I = walker.I;   
-% l = walker.l;  c = walker.c; w = walker.w;   
-% r = walker.r;  g = walker.g; 
-
-    M = 1000;
-    m = 1.0;
-    I = 0.00;
-    l = .85;
-    w = 0.0; 
-    c = 1.0;
-    r = 0.0;
-    g = 1.0;
-    
 
 flag = 1;
 if nargin<2
@@ -135,17 +105,6 @@ q1 = z0(1);
 u1 = z0(2);
 q2 = z0(3);
 u2 = z0(4);
-
-% %%%% Derived variables %%%%　運動エネルギーだと思うがなぜ出しているのかは良くわからん。とりあえず今回は不要。
-%     TE = 1/2*m*(((-l*cos(q1)-r)*u1-u1*(-c*cos(q1)+w*sin(q1)))^2+(-l*sin(q1)*u1+u1*(c*sin(q1)+w*cos(q1)))^2)+1/2*m*(((-l*cos(q1)-r)*u1-(u1-u2)*(-c*cos(q1-q2)+w*sin(q1-q2)))^2+(-l*sin(q1)*u1+(u1-u2)*(c*sin(q1-q2)+w*cos(q1-q2)))^2)+1/2*M*((-l*cos(q1)-r)^2*u1^2+l^2*sin(q1)^2*u1^2)+1/2*I*(u1^2+(u1-u2)^2)+2*m*g*cos(gam)*r+2*m*g*l*cos(gam-q1)-m*g*c*cos(gam-q1)-m*g*w*sin(gam-q1)+2*m*g*sin(gam)*r*q1-m*g*c*cos(gam-q1+q2)-m*g*w*sin(gam-q1+q2)+M*g*cos(gam)*r+M*g*l*cos(gam-q1)+M*g*sin(gam)*r*q1; 
-%     TE = 1/2*m*(-l*cos(q1))*u1-u1*(-c*cos(q1)+(-l*sin(q1)*u1+u1*(c*sin(q1)))^2)+1/2*m*(((-l*cos(q1))*u1-(u1-u2)*(-c*cos(q1-q2)))^2+(-l*sin(q1)*u1+(u1-u2)*(c*sin(q1-q2)))^2)+1/2*M*((-l*cos(q1))^2*u1^2+l^2*sin(q1)^2*u1^2)++2*m*g*l*cos(gam-q1)-m*g*c*cos(gam-q1)-m*g*c*cos(gam-q1+q2)+M*g*l*cos(gam-q1) ;
-%     xp1 = 0;
-%     xh = -l*sin(q1) - r*q1 + xp1;
-%     vxh = (-l*cos(q1)-r)*u1; 
-%     yh =  l*cos(q1) + r;
-%     vyh = -l*sin(q1)*u1; 
-    
-% z0 = [q1 u1 q2 u2 TE xh vxh yh vyh];
 z0 = [q1 u1 q2 u2];
 
 t0 = 0; 
@@ -179,11 +138,6 @@ if flag==1
    z=z_ode;
    t=t_ode;
    
-%    %%% written by TK %%%
-%    onestep_parameter = z;
-%    csvwrite(fname2,onestep_parameter);     
-%    %%%%%%%%%%%%%%%%%%%%%
-   
 end
 
 %%% 運動方程式の担当 %%%
@@ -193,12 +147,6 @@ function zdot=single_stance(~,z,gam)
 
 q1 = z(1);   u1 = z(2);                         
 q2 = z(3);   u2 = z(4);                         
-% xh = z(6);  vxh = z(7);                       
-% yh = z(8);  vyh = z(9);                     
-
-% M = walker.M;  m = walker.m; I = walker.I;   
-% l = walker.l;  c = walker.c; w = walker.w;   
-% r = walker.r;  g = walker.g; gam = walker.gam;
 
     M = 1000;
     m = 1.0;
@@ -209,9 +157,6 @@ q2 = z(3);   u2 = z(4);
     r = 0.0;
     g = 1.0;
     
-
-% Th=0;   %external hip torque, if needed 
-
 % 運動方程式の定義：I=w＝r=0、c=l（※l-aにてa＝0：池俣fig4.1）、で式を整理すると、池俣p20の、M11と完全に一致する！！！→20210809確認
 % M11 = -1*(-2*w^2*m-2*I+2*m*l*c*cos(q2)+2*m*w*l*sin(q2)-2*m*c^2-2*m*l^2-M*l^2+2*m*l*c-2*m*r^2-M*r^2+2*m*r*c*cos(q1-q2)-2*m*r*w*sin(q1-q2)-2*M*r*l*cos(q1)-4*m*r*l*cos(q1)+2*m*r*c*cos(q1)-2*m*r*w*sin(q1)); 
 M11 = -2*m*l*l*cos(q2)+2*m*l^2+M*l^2; 
@@ -247,20 +192,14 @@ ud2 = X(2);  % φ''
 zdot = [u1 ud1 u2 ud2]';  %[θ’ θ'' φ’ φ''　 ]
 
 %===================================================================
-function zplus=heelstrike(~,z,walker)      
+function zplus=heelstrike(~,z,gam)      
 %===================================================================
 
 r1 = z(1);   v1 = z(2);                         
 r2 = z(3);   v2 = z(4);                         
-% xh = z(6);   yh = z(8);                       
 
 q1 = r1 - r2;                         
 q2 = -r2;                                       
-
-% M = walker.M;  m = walker.m; I = walker.I;   
-% l = walker.l;  c = walker.c; w = walker.w;   
-% r = walker.r;  
-% g = walker.g; gam = walker.gam; 
 
     M = 1000;
     m = 1.0;
@@ -291,32 +230,12 @@ X = MM \ RHS;
 u1 = X(1);                                       
 u2 = X(2);                                      
 
-% 今は不要
-% TE = 1/2*m*(((-l*cos(q1)-r)*u1-u1*(-c*cos(q1)+w*sin(q1)))^2+(-l*sin(q1)*u1+u1*(c*sin(q1)+w*cos(q1)))^2)+1/2*m*(((-l*cos(q1)-r)*u1-(u1-u2)*(-c*cos(q1-q2)+w*sin(q1-q2)))^2+(-l*sin(q1)*u1+(u1-u2)*(c*sin(q1-q2)+w*cos(q1-q2)))^2)+1/2*M*((-l*cos(q1)-r)^2*u1^2+l^2*sin(q1)^2*u1^2)+1/2*I*(u1^2+(u1-u2)^2)+2*g*m*cos(gam)*r+2*m*g*l*cos(gam-q1)-m*g*c*cos(gam-q1)-m*g*w*sin(gam-q1)+2*g*m*sin(gam)*r*q1-m*g*c*cos(gam-q1+q2)-m*g*w*sin(gam-q1+q2)+g*M*cos(gam)*r+M*g*l*cos(gam-q1)+g*M*sin(gam)*r*q1; 
-% vxh = (-l*cos(q1)-r)*u1; 
-% vyh = -l*sin(q1)*u1; 
-
-%zplus = [q1 u1 q2 u2 TE xh vxh yh vyh];  
 zplus = [q1 u1 q2 u2 ];      
 
 
 %===================================================================
 function [gstop, isterminal,direction]=collision(~,z,~)
 %===================================================================
-
-% M = walker.M;  m = walker.m; I = walker.I;   
-% l = walker.l;  c = walker.c; w = walker.w;   
-% r = walker.r;  g = walker.g; gam = walker.gam; 
-
-    M = 1000;
-    m = 1.0;
-    I = 0.00;
-    l = .85;
-    w = 0.0; 
-    c = 1.0;
-    r = 0.0;
-    g = 1.0;
-    
 
 q1 = z(1); q2 = z(3); 
 
