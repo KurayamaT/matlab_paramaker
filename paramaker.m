@@ -1,6 +1,6 @@
 % make initial parameters [q1(sheta), u1(sheta-dot), g(gamma)] with the range of defined value.
 
-function [q,u,gam] = paramaker(q_start, q_end, q_points, u_start, u_end, u_points, gam_start, gam_end, gam_points);
+function [q,u,gamma] = paramaker(q_start, q_end, q_points, u_start, u_end, u_points, gam_start, gam_end, gam_points);
 %%%実行するときはここで定義しているfunction名はあまり関係なかったりする。ファイル名そのものに依存。
 
 format long;
@@ -11,9 +11,11 @@ format long;
 
 q  = q_start:(q_end-q_start)/q_points:q_end;
 u  = u_start:(u_end-u_start)/u_points:u_end;
-gam = gam_start:(gam_end-gam_start)/gam_points:gam_end;
+gamma = gam_start:(gam_end-gam_start)/gam_points:gam_end;
 
-passivewalker_k(q,u,gam)
+
+
+passivewalker_k(q,u,gamma)
 % save q1.mat q;
 % save u1.mat u;
 % save gam.mat gam;

@@ -4,28 +4,29 @@
 % 必要な関数：ODE113, FSOLVE, INTERP1. 
 % プログラム全体の流れ
 
-function passivewalker_k(q,u,gam)
+function passivewalker_k(q,u,gamma)
 
 tic
 
 delete *.csv 
+% 
+%     walker.M = 1000;
+%     walker.m = 1.0;
+%     walker.I = 0.00;
+%     walker.l = .85;
+%     walker.w = 0.0; 
+%     walker.c = 1.0;
+%     walker.r = 0.0;
+%     walker.g = 1.0;
 
-    walker.M = 1000;
-    walker.m = 1.0;
-    walker.I = 0.00;
-    walker.l = .85;
-    walker.w = 0.0; 
-    walker.c = 1.0;
-    walker.r = 0.0;
-    walker.g = 1.0;
-    
-for k = 1:length(gam)
-%     first = num2str(k);
-    walker.gam = gam(k);
+parfor k = 1:length(gamma)
+
+    %     first = num2str(k);
+    gam = gamma(k);
 %     str_gam = num2str(walker.gam);
 %     str_gam = append('gam, ',str_gam);
     
-    parfor i = 1:length(q)
+    for i = 1:length(q)
 %         second = num2str(i);
         for j = 1:length(u)
 %             third = num2str(j);
@@ -55,7 +56,7 @@ steps = 1; %number of steps to animate
 
 %%%% Root finding, Period one gait %%%%
 options = optimset('TolFun',1e-12,'TolX',1e-12,'Display','off');
-[zstar,~,exitflag] = fsolve(@fixedpt,z0,options,walker);
+[zstar,~,exitflag] = fsolve(@fixedpt,z0,options,gam);
 if exitflag ~= 1
        % error('Root finder not converged, change guess or change system parameters')
 
@@ -73,13 +74,13 @@ else
 end
 
 %%% Stability, using eigenvalues of Poincare map %%%
-J=partialder(@onestep,zstar,walker);
+J=partialder(@onestep,zstar,gam);
 disp('EigenValues for linearized map are');
 eig(J)
  
 %%%% Get data of leg motion. %%%
  csv_filename = filenamer(z0,kij);
- [z,~] = onestep(zstar,walker,steps);
+ [z,~] = onestep(zstar,gam,steps);
  onestep_parameter = z;
  csvwrite(csv_filename,onestep_parameter);   
  
@@ -105,19 +106,22 @@ str_q1 = num2str(z0(1));
 %===================================================================
 
 %===================================================================
-function [z,t]=onestep(z0,walker,~)
+function [z,t]=onestep(z0,gam,~)
 %===================================================================
 % 
 % M = walker.M;  m = walker.m; I = walker.I;   
 % l = walker.l;  c = walker.c; w = walker.w;   
-% r = walker.r;  g = walker.g; gam = walker.gam;
+% r = walker.r;  g = walker.g; 
 
-%%% written by TK %%%
- 
-    % for save onstep data.
+    M = 1000;
+    m = 1.0;
+    I = 0.00;
+    l = .85;
+    w = 0.0; 
+    c = 1.0;
+    r = 0.0;
+    g = 1.0;
     
-%     disp(fname2)
-%%%%%%%%%%%%%%%%%%%%%%%
 
 flag = 1;
 if nargin<2
@@ -155,10 +159,10 @@ z_ode = z0;
     options=odeset('abstol',1e-13,'reltol',1e-13,'events',@collision);
     %@collision関数で設定された条件（event）で計算停止を指示。
     tspan = linspace(t0,t0+dt,time_stamps);
-    [t_temp, z_temp] = ode113(@single_stance,tspan,z0,options,walker);
+    [t_temp, z_temp] = ode113(@single_stance,tspan,z0,options,gam);
     
     % call heelstrike 
-    zplus=heelstrike(t_temp(end),z_temp(end,:),walker); %　>>最終行を付加。
+    zplus=heelstrike(t_temp(end),z_temp(end,:),gam); %　>>最終行を付加。
     
     %%%次の回転の初期値。一周しかしない場合は不要%%%
 %     z0 = zplus;
@@ -184,7 +188,7 @@ end
 
 %%% 運動方程式の担当 %%%
 %===================================================================
-function zdot=single_stance(~,z,walker)  
+function zdot=single_stance(~,z,gam)  
 %===================================================================
 
 q1 = z(1);   u1 = z(2);                         
@@ -192,9 +196,19 @@ q2 = z(3);   u2 = z(4);
 % xh = z(6);  vxh = z(7);                       
 % yh = z(8);  vyh = z(9);                     
 
-M = walker.M;  m = walker.m; I = walker.I;   
-l = walker.l;  c = walker.c; w = walker.w;   
-r = walker.r;  g = walker.g; gam = walker.gam;
+% M = walker.M;  m = walker.m; I = walker.I;   
+% l = walker.l;  c = walker.c; w = walker.w;   
+% r = walker.r;  g = walker.g; gam = walker.gam;
+
+    M = 1000;
+    m = 1.0;
+    I = 0.00;
+    l = .85;
+    w = 0.0; 
+    c = 1.0;
+    r = 0.0;
+    g = 1.0;
+    
 
 % Th=0;   %external hip torque, if needed 
 
@@ -243,10 +257,20 @@ r2 = z(3);   v2 = z(4);
 q1 = r1 - r2;                         
 q2 = -r2;                                       
 
-M = walker.M;  m = walker.m; I = walker.I;   
-l = walker.l;  c = walker.c; w = walker.w;   
-r = walker.r;  
+% M = walker.M;  m = walker.m; I = walker.I;   
+% l = walker.l;  c = walker.c; w = walker.w;   
+% r = walker.r;  
 % g = walker.g; gam = walker.gam; 
+
+    M = 1000;
+    m = 1.0;
+    I = 0.00;
+    l = .85;
+    w = 0.0; 
+    c = 1.0;
+    r = 0.0;
+    g = 1.0;
+    
 
 M11 = 2*m*l^2-2*m*l*c+2*m*c^2+2*m*w^2+2*m*r^2+4*m*r*l*cos(q1)-2*m*r*c*cos(q1)+2*m*w*sin(q1)*r-2*m*l*c*cos(q2)-2*m*l*w*sin(q2)-2*m*r*c*cos(q1-q2)+2*m*sin(q1-q2)*w*r+M*l^2+2*M*r*l*cos(q1)+M*r^2+2*I; 
 M12 = m*l*c*cos(q2)+m*l*w*sin(q2)-m*c^2-m*w^2+m*r*c*cos(q1-q2)-m*sin(q1-q2)*w*r-I; 
@@ -283,6 +307,16 @@ function [gstop, isterminal,direction]=collision(~,z,~)
 % M = walker.M;  m = walker.m; I = walker.I;   
 % l = walker.l;  c = walker.c; w = walker.w;   
 % r = walker.r;  g = walker.g; gam = walker.gam; 
+
+    M = 1000;
+    m = 1.0;
+    I = 0.00;
+    l = .85;
+    w = 0.0; 
+    c = 1.0;
+    r = 0.0;
+    g = 1.0;
+    
 
 q1 = z(1); q2 = z(3); 
 
