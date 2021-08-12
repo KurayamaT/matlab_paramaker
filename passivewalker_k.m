@@ -52,23 +52,23 @@ if exitflag ~= 1
 else
     str_zstar = num2str(zstar);
     str_zstar = append('Fixed point = ' , str_zstar);
-    disp(str_zstar);
-    disp(str_z0)
-end
+%   disp(str_z0)
 
 %%% Stability, using eigenvalues of Poincare map %%%
 J=partialder(@onestep,zstar,gam);
 ramda = eig(J);
 decision = max(abs(ramda));
 if decision < 1
-disp('Limitcycle is stable.')
-disp('Motion data will be exported as a CSV file.')
-disp(ramda)
+disp(str_zstar);
+% disp('Limitcycle is stable.')
+% disp('Motion data will be exported as a CSV file.')
+% disp(ramda)
 %%%% Get data of leg motion. %%%
- csv_filename = filenamer(z0,kij);
- [z,~] = onestep(zstar,gam,steps);
- onestep_parameter = z;
- csvwrite(csv_filename,onestep_parameter);   
+%  csv_filename = filenamer(z0,kij);
+%  [z,~] = onestep(zstar,gam,steps);
+%  onestep_parameter = z;
+%  csvwrite(csv_filename,onestep_parameter);   
+end
 end
         end
     end   
