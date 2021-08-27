@@ -57,8 +57,8 @@ else
 %%% Stability, using eigenvalues of Poincare map %%%
 J=partialder(@onestep,zstar,gam);
 ramda = eig(J);
-decision = max(abs(ramda));
-if decision < 1
+ramda_abs_max = max(abs(ramda));
+if ramda_abs_max < 1
 disp(str_zstar);
 % disp('Limitcycle is stable.')
 % disp('Motion data will be exported as a CSV file.')
