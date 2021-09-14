@@ -8,7 +8,11 @@ function passivewalker_k(q,u,gamma)
 
 tic
 
-delete *.csv 
+% motionデータ保存用のフォルダ確保
+try rmdir MotionDataResults s;% フォルダが無くてもsustainさせるため
+catch 
+end
+mkdir MotionDataResults;
 % 
 %     walker.M = 1000;
 %     walker.m = 1.0;
@@ -64,10 +68,11 @@ disp(str_zstar);
 % disp('Motion data will be exported as a CSV file.')
 % disp(ramda)
 %%%% Get data of leg motion. %%%
-%  csv_filename = filenamer(z0,kij);
-%  [z,~] = onestep(zstar,gam,steps);
-%  onestep_parameter = z;
-%  csvwrite(csv_filename,onestep_parameter);   
+  csv_filename = filenamer(z0,kij);
+  [z,~] = onestep(zstar,gam,steps);
+  onestep_parameter = z;
+  out = ('MotionDataResults');
+  csvwrite(fullfile(out,csv_filename),onestep_parameter);   
 end
 end
         end
@@ -166,6 +171,7 @@ M12 = -1*(w^2*m+I-m*l*c*cos(q2)-m*w*l*sin(q2)+m*c^2-m*r*c*cos(q1-q2)+m*r*w*sin(q
 M21 = -1*(m*w*l*sin(q2)+m*l*c*cos(q2)-m*r*w*sin(q1-q2)+m*r*c*cos(q1-q2)-m*c^2-w^2*m-I); 
 M22 = -1*(w^2*m+m*c^2+I); 
 
+% External hip torque = th.
 % 以下は同じく池俣式のHとGに該当する
 % RHS1 = -2*m*r*u1*u2*c*sin(q1-q2)-2*m*r*u1*u2*w*cos(q1-q2)+m*r*u1^2*w*cos(q1)+m*r*u1^2*c*sin(q1)-2*m*r*l*sin(q1)*u1^2+M*g*sin(gam)*r+2*m*g*sin(gam)*r+m*r*u2^2*w*cos(q1-q2)+m*r*u2^2*c*sin(q1-q2)+m*r*u1^2*w*cos(q1-q2)+m*r*u1^2*c*sin(q1-q2)-M*r*l*sin(q1)*u1^2+M*g*l*sin(gam-q1)+2*m*g*l*sin(gam-q1)-m*g*c*sin(gam-q1)+m*g*w*cos(gam-q1)-m*g*c*sin(gam-q1+q2)+m*g*w*cos(gam-q1+q2)-2*m*l*u1*u2*w*cos(q2)-m*l*u2^2*c*sin(q2)+2*m*l*u1*u2*c*sin(q2)+m*l*u2^2*w*cos(q2); 
 RHS1 = M*g*l*sin(gam-q1)+2*m*g*l*sin(gam-q1)-m*g*c*sin(gam-q1)-m*g*c*sin(gam-q1+q2)-m*l*u2^2*c*sin(q2)+2*m*l*u1*u2*c*sin(q2); 
