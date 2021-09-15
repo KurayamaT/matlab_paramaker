@@ -4,7 +4,7 @@
 % 必要な関数：ODE113, FSOLVE, INTERP1. 
 % プログラム全体の流れ
 
-function passivewalker_k(q,u,gamma)
+function passivewalker_k_tau(q,u,gamma,tau)
 
 tic
 
@@ -24,10 +24,11 @@ mkdir MotionDataResults;
 %     walker.g = 1.0;
 
 parfor k = 1:length(gamma)
-    for i = 1:length(q)
+    for m = 1:length(tau)
+        for i = 1:length(q)
         for j = 1:length(u)
-            kij = append(num2str(k),'_',num2str(i),'_',num2str(j));
-            disp(kij)
+            kmij = append(num2str(k),'_',num2str(m),'_',num2str(i),'_',num2str(j));
+            disp(kmij)
                 
     
     %%%% Initial State %%%%%
@@ -36,21 +37,16 @@ parfor k = 1:length(gamma)
     q2 =  2*q1; % φ　　 最初の股角度
     u2 =  -1*u1*(1-cos(q2)); % φdot 最初の股角速度
     z0 = [q1 u1 q2 u2];
-    gam = gamma(k); 
-    %%%
-%     str_q1 = num2str(q1);
-%     str_u1 = num2str(u1);
-%     str_q2 = num2str(q2);
-%     str_u2 = num2str(u2);
-%     str_z0 = append('z0 =,  ',str_q1,',',str_u1,',',str_q2,',',str_u2);    
-
+    gam = gamma(k);
+    th = tau(m)
+    gamth = [gam th];
 %%%%%%%%%%%%%%%%%%%%%%%%%
 steps = 1; %number of steps to animate
 % fps = 10; %Use low frames per second for low gravity
 
 %%%% Root finding, Period one gait %%%%
 options = optimset('TolFun',1e-12,'TolX',1e-12,'Display','off');
-[zstar,~,exitflag] = fsolve(@fixedpt,z0,options,gam);
+[zstar,~,exitflag] = fsolve(@fixedpt,z0,options,gamth);
 if exitflag ~= 1
     continue
 else
@@ -59,7 +55,7 @@ else
 %   disp(str_z0)
 
 %%% Stability, using eigenvalues of Poincare map %%%
-J=partialder(@onestep,zstar,gam);
+J=partialder(@onestep,zstar,gamth);
 ramda = eig(J);
 ramda_abs_max = max(abs(ramda));
 if ramda_abs_max < 1
@@ -67,37 +63,40 @@ disp(str_zstar);
 % disp('Limitcycle is stable.')
 % disp('Motion data will be exported as a CSV file.')
 % disp(ramda)
+
 %%%% Get data of leg motion. %%%
-  csv_filename = filenamer(z0,gam);
-  [z,~] = onestep(zstar,gam,steps);
+  csv_filename = filenamer(z0,gamth);
+  [z,~] = onestep(zstar,gamth,steps);
   onestep_parameter = z;
   out = ('MotionDataResults');
   csvwrite(fullfile(out,csv_filename),onestep_parameter);   
 end
 end
         end
+        end
     end   
 end
 toc
 
 %===================================================================
-function poincaremap = fixedpt(z0,walker)
+function poincaremap = fixedpt(z0,gamth)
 %===================================================================
-poincaremap = onestep(z0,walker)-z0; 
+poincaremap = onestep(z0,gamth)-z0; 
 %disp(zdiff')
 %ここの右辺にある部分が、f(x)として認識され、fsolveで球解される。
 
 %===================================================================
 % データ保存用csvのファイル名を決定
-function csv_filename = filenamer(z0,gam)
+function csv_filename = filenamer(z0,gamth)
     str_q1 = num2str(z0(1));
     str_u1 = num2str(z0(2));
-    str_gam = num2str(gam);
-    csv_filename = append('onestep_parameter_',str_q1,'_',str_u1,'_',str_gam,'.csv');
+    str_gam = num2str(gamth(1));
+    str_th = num2str(gamth(2));
+    csv_filename = append('onestep_parameter_',str_q1,'_',str_u1,'_',str_gam,'_',str_th,'.csv');
 %===================================================================
 
 %===================================================================
-function [z,t]=onestep(z0,gam,~)
+function [z,t]=onestep(z0,gamth,~)
 %===================================================================
 
 flag = 1;
@@ -116,7 +115,7 @@ z0 = [q1 u1 q2 u2];
 
 t0 = 0; 
 dt = 5; %計算間隔　might need to be changed based on time taken for one step
-time_stamps = 20; %計算終了回数
+time_stamps = 1000; %計算終了回数
 t_ode = t0;
 z_ode = z0;
 
@@ -126,14 +125,14 @@ z_ode = z0;
     %@collision関数で設定された条件（event）で計算停止を指示。
     tspan = linspace(t0,t0+dt,time_stamps);
     %y = linspace(x1,x2,n) は、x1 ～ x2 の間の等間隔の点を n 個含む行ベクトルを返します。
-    [t_temp, z_temp] = ode113(@single_stance,tspan,z0,options,gam);
+    [t_temp, z_temp] = ode113(@single_stance,tspan,z0,options,gamth);
     % ode113⇒初期値を方程式に適用し、tspanの範囲で積分している
     % [t,y] = ode113(odefun,tspan,y0) は、tspan = [t0 tf] のときに、
     % 初期条件 y0 を使用して、微分方程式系 y′=f(t,y) を t0 から tf まで積分します。
     % 解の配列 y の各行は、列ベクトル t に返される値に対応します。
     
     % call heelstrike 
-    zplus=heelstrike(t_temp(end),z_temp(end,:),gam); %　>>最終行を付加。
+    zplus=heelstrike(t_temp(end),z_temp(end,:)); %　>>最終行を付加。
     
     %%%次の回転の初期値。一周しかしない場合は不要%%%
 %     z0 = zplus;
@@ -154,12 +153,12 @@ end
 
 %%% 運動方程式の担当 %%%
 %===================================================================
-function zdot=single_stance(~,z,gam)  
+function zdot=single_stance(~,z,gamth)  
 %===================================================================
 
 q1 = z(1);   u1 = z(2);                         
 q2 = z(3);   u2 = z(4);                         
-
+gam = gamth(1); th = gamth(2);
     M = 1000;
     m = 1.0;
     I = 0.00;
@@ -181,7 +180,7 @@ M22 = -1*(w^2*m+m*c^2+I);
 % RHS1 = -2*m*r*u1*u2*c*sin(q1-q2)-2*m*r*u1*u2*w*cos(q1-q2)+m*r*u1^2*w*cos(q1)+m*r*u1^2*c*sin(q1)-2*m*r*l*sin(q1)*u1^2+M*g*sin(gam)*r+2*m*g*sin(gam)*r+m*r*u2^2*w*cos(q1-q2)+m*r*u2^2*c*sin(q1-q2)+m*r*u1^2*w*cos(q1-q2)+m*r*u1^2*c*sin(q1-q2)-M*r*l*sin(q1)*u1^2+M*g*l*sin(gam-q1)+2*m*g*l*sin(gam-q1)-m*g*c*sin(gam-q1)+m*g*w*cos(gam-q1)-m*g*c*sin(gam-q1+q2)+m*g*w*cos(gam-q1+q2)-2*m*l*u1*u2*w*cos(q2)-m*l*u2^2*c*sin(q2)+2*m*l*u1*u2*c*sin(q2)+m*l*u2^2*w*cos(q2); 
 RHS1 = M*g*l*sin(gam-q1)+2*m*g*l*sin(gam-q1)-m*g*c*sin(gam-q1)-m*g*c*sin(gam-q1+q2)-m*l*u2^2*c*sin(q2)+2*m*l*u1*u2*c*sin(q2); 
 % RHS2 = -m*g*c*sin(gam-q1+q2)+m*g*w*cos(gam-q1+q2)-Th-m*l*u1^2*w*cos(q2)+m*l*u1^2*c*sin(q2); 
-RHS2 = -m*g*c*sin(gam-q1+q2)+m*l*u1^2*c*sin(q2); 
+RHS2 = -m*g*c*sin(gam-q1+q2)+m*l*u1^2*c*sin(q2)-th-m*l*u1^2*w*cos(q2); 
 
 MM = [M11 M12;                               
       M21 M22];                               
@@ -205,7 +204,7 @@ ud2 = X(2);  % φ''
 zdot = [u1 ud1 u2 ud2]';  %[θ’ θ'' φ’ φ''　 ]
 
 %===================================================================
-function zplus=heelstrike(~,z,gam)      
+function zplus=heelstrike(~,z)      
 %===================================================================
 
 r1 = z(1);   v1 = z(2);                         
@@ -287,4 +286,3 @@ for i=1:n
     J(:,i)=(feval(FUN,ztemp1,walker)-feval(FUN,ztemp2,walker)) ;
 end
 J=J/(2*pert);
-
