@@ -115,8 +115,8 @@ u2 = z0(4);
 z0 = [q1 u1 q2 u2];
 
 t0 = 0; 
-dt = 5; %might need to be changed based on time taken for one step
-time_stamps = 20;
+dt = 5; %計算間隔　might need to be changed based on time taken for one step
+time_stamps = 20; %計算終了回数
 t_ode = t0;
 z_ode = z0;
 
@@ -125,7 +125,12 @@ z_ode = z0;
     options=odeset('abstol',1e-13,'reltol',1e-13,'events',@collision);
     %@collision関数で設定された条件（event）で計算停止を指示。
     tspan = linspace(t0,t0+dt,time_stamps);
+    %y = linspace(x1,x2,n) は、x1 ～ x2 の間の等間隔の点を n 個含む行ベクトルを返します。
     [t_temp, z_temp] = ode113(@single_stance,tspan,z0,options,gam);
+    % ode113⇒初期値を方程式に適用し、tspanの範囲で積分している
+    % [t,y] = ode113(odefun,tspan,y0) は、tspan = [t0 tf] のときに、
+    % 初期条件 y0 を使用して、微分方程式系 y′=f(t,y) を t0 から tf まで積分します。
+    % 解の配列 y の各行は、列ベクトル t に返される値に対応します。
     
     % call heelstrike 
     zplus=heelstrike(t_temp(end),z_temp(end,:),gam); %　>>最終行を付加。
