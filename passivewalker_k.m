@@ -68,7 +68,7 @@ disp(str_zstar);
 % disp('Motion data will be exported as a CSV file.')
 % disp(ramda)
 %%%% Get data of leg motion. %%%
-  csv_filename = filenamer(z0,kij);
+  csv_filename = filenamer(z0,gam);
   [z,~] = onestep(zstar,gam,steps);
   onestep_parameter = z;
   out = ('MotionDataResults');
@@ -90,7 +90,7 @@ poincaremap = onestep(z0,walker)-z0;
 %===================================================================
 % データ保存用csvのファイル名を決定
 function csv_filename = filenamer(z0,gam)
-str_q1 = num2str(z0(1));
+    str_q1 = num2str(z0(1));
     str_u1 = num2str(z0(2));
     str_gam = num2str(gam);
     csv_filename = append('onestep_parameter_',str_q1,'_',str_u1,'_',str_gam,'.csv');

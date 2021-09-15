@@ -14,14 +14,13 @@ q  = q_start:(q_end-q_start)/q_points:q_end;
 u  = u_start:(u_end-u_start)/u_points:u_end;
 gamma = gam_start:(gam_end-gam_start)/gam_points:gam_end;
 
-passivewalker_k(q,u,gamma)
+passivewalker_k(q,u,gamma);
 % save q1.mat q;
 % save u1.mat u;
 % save gam.mat gam;
 
 %%% ↓お試し用：入力数値コマンド
-% paramaker(0.017453293,0.13962634,3,0.017453293,0.13962634,3,5.81776E-05,0.000523599,3)
-% marged_runner_and_paramaker(0.017453293,0.13962634,3,0.017453293,0.13962634,3,5.81776E-05,0.000523599,3)
+% paramaker(0.01745,0.5236,10,0.256,2.56,10,0.001,1.57,10)
 
 
 
