@@ -1,7 +1,7 @@
 % make initial parameters [q1(theta), u1(theta-dot), g(gamma)] with the range of defined value.
 % θの開始と終了値、point数、θ'の開始と終了値、point数、γの開始と終了値、point数を入力。
 
-function [q,u,gamma] = paramaker(q_start, q_end, q_points, u_start, u_end, u_points, gam_start, gam_end, gam_points);
+function [q,u,gamma] = paramaker_k(q_start, q_end, q_points, u_start, u_end, u_points, gam_start, gam_end, gam_points);
 %%%実行するときはここで定義しているfunction名はあまり関係なかったりする。ファイル名そのものに依存。
 
 format long;
