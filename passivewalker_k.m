@@ -64,9 +64,9 @@ ramda = eig(J);
 ramda_abs_max = max(abs(ramda));
 if ramda_abs_max < 1
 disp(str_zstar);
-% disp('Limitcycle is stable.')
-% disp('Motion data will be exported as a CSV file.')
-% disp(ramda)
+disp('Limitcycle is stable.')
+disp('Motion data will be exported as a CSV file.')
+disp(ramda)
 %%%% Get data of leg motion. %%%
   csv_filename = filenamer(z0,gam);
   [z,~] = onestep(zstar,gam,steps);
