@@ -1,4 +1,4 @@
-% This is the primary function named "runner.m".
+% This is the primary function named "passivewalker_k.m".
 % 引数：θ、θdot、γが引数。
 % 出力：コマンドラインに”fixedpoint”を表示、一歩分の周期データをcsvで出力
 % 必要な関数：ODE113, FSOLVE, INTERP1. 

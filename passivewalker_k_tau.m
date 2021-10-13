@@ -1,27 +1,20 @@
-% This is the primary function named "runner.m".
-% 引数：θ、θdot、γが引数。
+% This is the primary function named "passivewalker_k_tau.m".
+% 引数：θ、θdot、γ、tauが引数。
 % 出力：コマンドラインに”fixedpoint”を表示、一歩分の周期データをcsvで出力
 % 必要な関数：ODE113, FSOLVE, INTERP1. 
 % プログラム全体の流れ
+
+% お試し用コマンドライン
 
 function passivewalker_k_tau(q,u,gamma,tau)
 
 tic
 
 % motionデータ保存用のフォルダ確保
-try rmdir MotionDataResults s;% フォルダが無くてもsustainさせるため
+try rmdir MotionDataResults_tau s;% フォルダが無くてもsustainさせるため
 catch 
 end
-mkdir MotionDataResults;
-% 
-%     walker.M = 1000;
-%     walker.m = 1.0;
-%     walker.I = 0.00;
-%     walker.l = .85;
-%     walker.w = 0.0; 
-%     walker.c = 1.0;
-%     walker.r = 0.0;
-%     walker.g = 1.0;
+mkdir MotionDataResults_tau;
 
 parfor k = 1:length(gamma)
     for m = 1:length(tau)
@@ -29,16 +22,15 @@ parfor k = 1:length(gamma)
         for j = 1:length(u)
             kmij = append(num2str(k),'_',num2str(m),'_',num2str(i),'_',num2str(j));
             disp(kmij)
-                
-    
-    %%%% Initial State %%%%%
+                    
+%%%% Initial State %%%%%
     q1 =  q(i);
     u1 = -1*u(j);
     q2 =  2*q1; % φ　　 最初の股角度
     u2 =  -1*u1*(1-cos(q2)); % φdot 最初の股角速度
     z0 = [q1 u1 q2 u2];
     gam = gamma(k);
-    th = tau(m)
+    th = tau(m);
     gamth = [gam th];
 %%%%%%%%%%%%%%%%%%%%%%%%%
 steps = 1; %number of steps to animate
@@ -60,9 +52,9 @@ ramda = eig(J);
 ramda_abs_max = max(abs(ramda));
 if ramda_abs_max < 1
 disp(str_zstar);
-% disp('Limitcycle is stable.')
-% disp('Motion data will be exported as a CSV file.')
-% disp(ramda)
+disp('Limitcycle is stable.')
+disp('Motion data will be exported as a CSV file.')
+disp(ramda)
 
 %%%% Get data of leg motion. %%%
   csv_filename = filenamer(z0,gamth);
@@ -170,17 +162,22 @@ gam = gamth(1); th = gamth(2);
     
 % 運動方程式の定義：I=w＝r=0、c=l（※l-aにてa＝0：池俣fig4.1）、で式を整理すると、池俣p20の、M11と完全に一致する！！！→20210809確認
 % M11 = -1*(-2*w^2*m-2*I+2*m*l*c*cos(q2)+2*m*w*l*sin(q2)-2*m*c^2-2*m*l^2-M*l^2+2*m*l*c-2*m*r^2-M*r^2+2*m*r*c*cos(q1-q2)-2*m*r*w*sin(q1-q2)-2*M*r*l*cos(q1)-4*m*r*l*cos(q1)+2*m*r*c*cos(q1)-2*m*r*w*sin(q1)); 
-M11 = -2*m*l*l*cos(q2)+2*m*l^2+M*l^2; 
-M12 = -1*(w^2*m+I-m*l*c*cos(q2)-m*w*l*sin(q2)+m*c^2-m*r*c*cos(q1-q2)+m*r*w*sin(q1-q2)); 
-M21 = -1*(m*w*l*sin(q2)+m*l*c*cos(q2)-m*r*w*sin(q1-q2)+m*r*c*cos(q1-q2)-m*c^2-w^2*m-I); 
-M22 = -1*(w^2*m+m*c^2+I); 
+% M12 = -1*(w^2*m+I-m*l*c*cos(q2)-m*w*l*sin(q2)+m*c^2-m*r*c*cos(q1-q2)+m*r*w*sin(q1-q2)); 
+% M21 = -1*(m*w*l*sin(q2)+m*l*c*cos(q2)-m*r*w*sin(q1-q2)+m*r*c*cos(q1-q2)-m*c^2-w^2*m-I); 
+% M22 = -1*(w^2*m+m*c^2+I); 
+M11 = -1*(-2*I+2*m*l*c*cos(q2)-2*m*c^2-2*m*l^2-M*l^2+2*m*l*c-2*m*r^2-M*r^2+2*m*r*c*cos(q1-q2)-2*M*r*l*cos(q1)-4*m*r*l*cos(q1)+2*m*r*c*cos(q1)); 
+M12 = -1*(I-m*l*c*cos(q2)+m*c^2-m*r*c*cos(q1-q2)); 
+M21 = -1*(m*l*c*cos(q2)+m*r*c*cos(q1-q2)-m*c^2); 
+M22 = -1*(m*c^2+I); 
+
 
 % External hip torque = th.
 % 以下は同じく池俣式のHとGに該当する
 % RHS1 = -2*m*r*u1*u2*c*sin(q1-q2)-2*m*r*u1*u2*w*cos(q1-q2)+m*r*u1^2*w*cos(q1)+m*r*u1^2*c*sin(q1)-2*m*r*l*sin(q1)*u1^2+M*g*sin(gam)*r+2*m*g*sin(gam)*r+m*r*u2^2*w*cos(q1-q2)+m*r*u2^2*c*sin(q1-q2)+m*r*u1^2*w*cos(q1-q2)+m*r*u1^2*c*sin(q1-q2)-M*r*l*sin(q1)*u1^2+M*g*l*sin(gam-q1)+2*m*g*l*sin(gam-q1)-m*g*c*sin(gam-q1)+m*g*w*cos(gam-q1)-m*g*c*sin(gam-q1+q2)+m*g*w*cos(gam-q1+q2)-2*m*l*u1*u2*w*cos(q2)-m*l*u2^2*c*sin(q2)+2*m*l*u1*u2*c*sin(q2)+m*l*u2^2*w*cos(q2); 
-RHS1 = M*g*l*sin(gam-q1)+2*m*g*l*sin(gam-q1)-m*g*c*sin(gam-q1)-m*g*c*sin(gam-q1+q2)-m*l*u2^2*c*sin(q2)+2*m*l*u1*u2*c*sin(q2); 
 % RHS2 = -m*g*c*sin(gam-q1+q2)+m*g*w*cos(gam-q1+q2)-Th-m*l*u1^2*w*cos(q2)+m*l*u1^2*c*sin(q2); 
-RHS2 = -m*g*c*sin(gam-q1+q2)+m*l*u1^2*c*sin(q2)-th-m*l*u1^2*w*cos(q2); 
+
+RHS1 = -2*m*r*u1*u2*c*sin(q1-q2)+m*r*u1^2*c*sin(q1)-2*m*r*l*sin(q1)*u1^2+M*g*sin(gam)*r+2*m*g*sin(gam)*r+m*r*u2^2*c*sin(q1-q2)+m*r*u1^2*c*sin(q1-q2)-M*r*l*sin(q1)*u1^2+M*g*l*sin(gam-q1)+2*m*g*l*sin(gam-q1)-m*g*c*sin(gam-q1)-m*g*c*sin(gam-q1+q2)-m*l*u2^2*c*sin(q2)+2*m*l*u1*u2*c*sin(q2); 
+RHS2 = -m*g*c*sin(gam-q1+q2)-th+m*l*u1^2*c*sin(q2); 
 
 MM = [M11 M12;                               
       M21 M22];                               
