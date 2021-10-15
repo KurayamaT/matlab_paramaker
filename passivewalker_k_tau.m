@@ -1,4 +1,5 @@
 % This is the primary function named "passivewalker_k_tau.m".
+% 円弧脚の再現と股関節駆動の再現
 % 引数：θ、θdot、γ、tauが引数。
 % 出力：コマンドラインに”fixedpoint”を表示、一歩分の周期データをcsvで出力
 % 必要な関数：ODE113, FSOLVE, INTERP1. 
