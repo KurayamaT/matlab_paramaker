@@ -5,6 +5,12 @@
 % 必要な関数：ODE113, FSOLVE, INTERP1. 
 % プログラム全体の流れ
 
+%%入力する規定数値
+% walker.M = 67.0; walker.m = 13; walker.I = 0.02; walker.l = .85; walker.w = 0.0; 
+% walker.c = 0.28; walker.r = 0.1; walker.g = 1.0; 
+
+
+
 % お試し用コマンドライン
 
 function passivewalker_k_tau(q,u,gamma,tau)
@@ -152,13 +158,16 @@ function zdot=single_stance(~,z,gamth)
 q1 = z(1);   u1 = z(2);                         
 q2 = z(3);   u2 = z(4);                         
 gam = gamth(1); th = gamth(2);
-    M = 1000;
-    m = 1.0;
+
+walker.M = 67.0; walker.m = 13; walker.I = 0.02; walker.l = .85; walker.w = 0.0; 
+    walker.c = 0.28; walker.r = 0.1; walker.g = 1.0; 
+    M = 67;
+    m = 13;
     I = 0.00;
-    l = .85;
+    l = .84;
     w = 0.0; 
-    c = 1.0;
-    r = 0.0;
+    c = .28;
+    r = 0.1;
     g = 1.0;
     
 % 運動方程式の定義：I=w＝r=0、c=l（※l-aにてa＝0：池俣fig4.1）、で式を整理すると、池俣p20の、M11と完全に一致する！！！→20210809確認
