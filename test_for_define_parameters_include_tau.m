@@ -14,6 +14,7 @@ clc
 clear all
 close all
 format long
+warning off
 
 if nargin == 0
     flag = 1; %simulates simplest walker by default
@@ -44,8 +45,9 @@ if flag == 1
     %%%% Dimensions %%
     %% c = COM on the leg from hip, w = COM fore-aft offset, r = radius of feet
     %% M = hip mass, m = leg mass, I = leg inertia, l = leg length
-    walker.M = 67.0; walker.m = 13; walker.I = 0.02; walker.l = .85; walker.w = 0.0; 
-    walker.c = 0.28; walker.r = 0.1; walker.g = 1.0; walker.gam = 0.15; 
+walker.M = 56 ; walker.m = 12; walker.I = .78 ; walker.l = .84; walker.w = 0.0; 
+walker.c = 0.425 ; walker.r = 0.1; walker.g = .98;  ; walker.gam = 0.009;
+    
     
     %%%% Initial State %%%%%
     q1 = 0.2; u1 = -0.3;
@@ -185,6 +187,11 @@ z = zplus(1:4);
 if flag==1
    z=z_ode;
    t=t_ode;
+   
+   save time.mat t
+%    disp(t)
+%    mt = median(t)
+%    disp(mt)
 end
 
 %===================================================================
@@ -200,7 +207,13 @@ M = walker.M;  m = walker.m; I = walker.I;
 l = walker.l;  c = walker.c; w = walker.w;   
 r = walker.r;  g = walker.g; gam = walker.gam;
 
-Th=0;   %external hip torque, if needed               
+disp(median(t))
+
+if t > median(t)
+Th=0.1;   %external hip torque, if needed               
+else
+Th = 0;    
+end
 
 M11 = -2*w^2*m-2*I+2*m*l*c*cos(q2)+2*m*w*l*sin(q2)-2*m*c^2-2*m*l^2-M*l^2+2*m*l*c-2*m*r^2-M*r^2+2*m*r*c*cos(q1-q2)-2*m*r*w*sin(q1-q2)-2*M*r*l*cos(q1)-4*m*r*l*cos(q1)+2*m*r*c*cos(q1)-2*m*r*w*sin(q1); 
 M12 = w^2*m+I-m*l*c*cos(q2)-m*w*l*sin(q2)+m*c^2-m*r*c*cos(q1-q2)+m*r*w*sin(q1-q2); 

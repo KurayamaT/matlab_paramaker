@@ -1,5 +1,6 @@
 % This is the primary function named "passivewalker_k_tau.m".
-% 円弧脚の再現と股関節駆動の再現
+% 円弧脚の再現と股関節駆動の再現。
+% 倉山の体格を基にして作られている。
 % 引数：θ、θdot、γ、tauが引数。
 % 出力：コマンドラインに”fixedpoint”を表示、一歩分の周期データをcsvで出力
 % 必要な関数：ODE113, FSOLVE, INTERP1. 
@@ -12,6 +13,9 @@
 
 
 % お試し用コマンドライン
+% paramaker_k_tau(.2,.6,2,-.6,-.2,2,.1,.2,2,.0,.1,2)
+% for seeking convenient value of tau.
+% paramaker_k_tau(.4,.6,2,-.5,-.4,2,.1,.3,2,.1,.5,4)
 
 function passivewalker_k_tau(q,u,gamma,tau)
 
@@ -26,10 +30,12 @@ mkdir MotionDataResults_tau;
 parfor k = 1:length(gamma)
     for m = 1:length(tau)
         for i = 1:length(q)
-        for j = 1:length(u)
+           for j = 1:length(u)
             kmij = append(num2str(k),'_',num2str(m),'_',num2str(i),'_',num2str(j));
             disp(kmij)
-                    
+            on_going = append(num2str(q(i)),'_',num2str(u(j)),'_',num2str(gamma(k)),'_',num2str(tau(m)));
+            disp(on_going)
+            
 %%%% Initial State %%%%%
     q1 =  q(i);
     u1 = -1*u(j);
@@ -50,26 +56,27 @@ if exitflag ~= 1
     continue
 else
     str_zstar = num2str(zstar);
-    str_zstar = append('Fixed point = ' , str_zstar);
+    str_zstar2 = append('Fixed point = ' , str_zstar);
 %   disp(str_z0)
 
 %%% Stability, using eigenvalues of Poincare map %%%
 J=partialder(@onestep,zstar,gamth);
 ramda = eig(J);
 ramda_abs_max = max(abs(ramda));
-if ramda_abs_max < 1
-disp(str_zstar);
-disp('Limitcycle is stable.')
-disp('Motion data will be exported as a CSV file.')
-disp(ramda)
+% if ramda_abs_max < 1
+disp(str_zstar2);
+% disp('Limitcycle is stable.')
+% disp('Motion data will be exported as a CSV file.')
+% disp('ramda max value is below↓')
+disp(ramda_abs_max)
 
 %%%% Get data of leg motion. %%%
   csv_filename = filenamer(z0,gamth);
   [z,~] = onestep(zstar,gamth,steps);
   onestep_parameter = z;
-  out = ('MotionDataResults');
+  out = ('MotionDataResults_tau');
   csvwrite(fullfile(out,csv_filename),onestep_parameter);   
-end
+% end
 end
         end
         end
@@ -159,16 +166,14 @@ q1 = z(1);   u1 = z(2);
 q2 = z(3);   u2 = z(4);                         
 gam = gamth(1); th = gamth(2);
 
-walker.M = 67.0; walker.m = 13; walker.I = 0.02; walker.l = .85; walker.w = 0.0; 
-    walker.c = 0.28; walker.r = 0.1; walker.g = 1.0; 
-    M = 67;
-    m = 13;
-    I = 0.00;
-    l = .84;
-    w = 0.0; 
-    c = .28;
-    r = 0.1;
-    g = 1.0;
+    M = 56; %[kg]
+    m = 12; %[kg]
+      I =  .78; %[kg・m^2]
+    l  = .84;   %[m]
+    w = 0; %[m]
+    c = .42;  %[m]
+    r = .1;  %[m]
+    g = .98;  %[1N]
     
 % 運動方程式の定義：I=w＝r=0、c=l（※l-aにてa＝0：池俣fig4.1）、で式を整理すると、池俣p20の、M11と完全に一致する！！！→20210809確認
 % M11 = -1*(-2*w^2*m-2*I+2*m*l*c*cos(q2)+2*m*w*l*sin(q2)-2*m*c^2-2*m*l^2-M*l^2+2*m*l*c-2*m*r^2-M*r^2+2*m*r*c*cos(q1-q2)-2*m*r*w*sin(q1-q2)-2*M*r*l*cos(q1)-4*m*r*l*cos(q1)+2*m*r*c*cos(q1)-2*m*r*w*sin(q1)); 
@@ -187,7 +192,8 @@ M22 = -1*(m*c^2+I);
 % RHS2 = -m*g*c*sin(gam-q1+q2)+m*g*w*cos(gam-q1+q2)-Th-m*l*u1^2*w*cos(q2)+m*l*u1^2*c*sin(q2); 
 
 RHS1 = -2*m*r*u1*u2*c*sin(q1-q2)+m*r*u1^2*c*sin(q1)-2*m*r*l*sin(q1)*u1^2+M*g*sin(gam)*r+2*m*g*sin(gam)*r+m*r*u2^2*c*sin(q1-q2)+m*r*u1^2*c*sin(q1-q2)-M*r*l*sin(q1)*u1^2+M*g*l*sin(gam-q1)+2*m*g*l*sin(gam-q1)-m*g*c*sin(gam-q1)-m*g*c*sin(gam-q1+q2)-m*l*u2^2*c*sin(q2)+2*m*l*u1*u2*c*sin(q2); 
-RHS2 = -m*g*c*sin(gam-q1+q2)-th+m*l*u1^2*c*sin(q2); 
+% RHS2 = -m*g*c*sin(gam-q1+q2)-th+m*l*u1^2*c*sin(q2); 
+RHS2 = -m*g*c*sin(gam-q1+q2)+m*l*u1^2*c*sin(q2); 
 
 MM = [M11 M12;                               
       M21 M22];                               
@@ -220,24 +226,29 @@ r2 = z(3);   v2 = z(4);
 q1 = r1 - r2;                         
 q2 = -r2;                                       
 
-    M = 1000;
-    m = 1.0;
-    I = 0.00;
-    l = .85;
-    w = 0.0; 
-    c = 1.0;
-    r = 0.0;
-    g = 1.0;
-    
+    M = 56; %[kg]
+    m = 12; %[kg]
+      I =  .78; %[kg・m^2]
+    l  = .84;   %[m]
+    w = 0; %[m]
+    c = .42;  %[m]
+    r = .1;  %[m]
+    g = .98;  %[1N]    
 
-M11 = 2*m*l^2-2*m*l*c+2*m*c^2+2*m*w^2+2*m*r^2+4*m*r*l*cos(q1)-2*m*r*c*cos(q1)+2*m*w*sin(q1)*r-2*m*l*c*cos(q2)-2*m*l*w*sin(q2)-2*m*r*c*cos(q1-q2)+2*m*sin(q1-q2)*w*r+M*l^2+2*M*r*l*cos(q1)+M*r^2+2*I; 
-M12 = m*l*c*cos(q2)+m*l*w*sin(q2)-m*c^2-m*w^2+m*r*c*cos(q1-q2)-m*sin(q1-q2)*w*r-I; 
+% M11 = 2*m*l^2-2*m*l*c+2*m*c^2+2*m*w^2+2*m*r^2+4*m*r*l*cos(q1)-2*m*r*c*cos(q1)+2*m*w*sin(q1)*r-2*m*l*c*cos(q2)-2*m*l*w*sin(q2)-2*m*r*c*cos(q1-q2)+2*m*sin(q1-q2)*w*r+M*l^2+2*M*r*l*cos(q1)+M*r^2+2*I; 
+% M12 = m*l*c*cos(q2)+m*l*w*sin(q2)-m*c^2-m*w^2+m*r*c*cos(q1-q2)-m*sin(q1-q2)*w*r-I; 
+M11 = 2*m*l^2-2*m*l*c+2*m*c^2+2*m*r^2+4*m*r*l*cos(q1)-2*m*r*c*cos(q1)-2*m*l*c*cos(q2)-2*m*r*c*cos(q1-q2)+M*l^2+2*M*r*l*cos(q1)+M*r^2+2*I; 
+M12 = m*l*c*cos(q2)-m*c^2+m*r*c*cos(q1-q2)-I; 
 
-M21 = -m*l*c*cos(q2)-m*l*w*sin(q2)+m*c^2+m*w^2-m*r*c*cos(q1-q2)+m*sin(q1-q2)*w*r+I; 
-M22 = -m*w^2-m*c^2-I; 
+% M21 = -m*l*c*cos(q2)-m*l*w*sin(q2)+m*c^2+m*w^2-m*r*c*cos(q1-q2)+m*sin(q1-q2)*w*r+I; 
+% M22 = -m*w^2-m*c^2-I; 
+M21 = -m*l*c*cos(q2)+m*c^2-m*r*c*cos(q1-q2)+I; 
+M22 = -m*c^2-I; 
 
-RHS1 = m*l*v2*c-m*c^2*v2+M*v1*r^2-2*m*c*l*v1+M*v1*l^2*cos(r2)+2*m*l^2*v1*cos(r2)+2*I*v1-I*v2+2*m*v1*r^2-2*m*l*v1*c*cos(r2)+2*m*c^2*v1+2*m*w^2*v1-m*w^2*v2+2*m*r*v1*w*sin(r1)+M*r*v1*l*cos(r1)+M*l*cos(-r1+r2)*v1*r-2*m*r*v1*c*cos(r1)+2*m*l*cos(-r1+r2)*v1*r+2*m*r*v1*l*cos(r1)-2*m*r*v1*c*cos(-r1+r2)-2*m*r*v1*w*sin(-r1+r2)+m*r*v2*c*cos(-r1+r2)+m*r*v2*w*sin(-r1+r2); 
-RHS2 = m*r*v1*w*sin(r1)-m*r*v1*c*cos(r1)+I*v1-I*v2+m*w^2*v1-m*c*l*v1+m*c^2*v1; 
+% RHS1 = m*l*v2*c-m*c^2*v2+M*v1*r^2-2*m*c*l*v1+M*v1*l^2*cos(r2)+2*m*l^2*v1*cos(r2)+2*I*v1-I*v2+2*m*v1*r^2-2*m*l*v1*c*cos(r2)+2*m*c^2*v1+2*m*w^2*v1-m*w^2*v2+2*m*r*v1*w*sin(r1)+M*r*v1*l*cos(r1)+M*l*cos(-r1+r2)*v1*r-2*m*r*v1*c*cos(r1)+2*m*l*cos(-r1+r2)*v1*r+2*m*r*v1*l*cos(r1)-2*m*r*v1*c*cos(-r1+r2)-2*m*r*v1*w*sin(-r1+r2)+m*r*v2*c*cos(-r1+r2)+m*r*v2*w*sin(-r1+r2); 
+% RHS2 = m*r*v1*w*sin(r1)-m*r*v1*c*cos(r1)+I*v1-I*v2+m*w^2*v1-m*c*l*v1+m*c^2*v1; 
+RHS1 = m*l*v2*c-m*c^2*v2+M*v1*r^2-2*m*c*l*v1+M*v1*l^2*cos(r2)+2*m*l^2*v1*cos(r2)+2*I*v1-I*v2+2*m*v1*r^2-2*m*l*v1*c*cos(r2)+2*m*c^2*v1+M*r*v1*l*cos(r1)+M*l*cos(-r1+r2)*v1*r-2*m*r*v1*c*cos(r1)+2*m*l*cos(-r1+r2)*v1*r+2*m*r*v1*l*cos(r1)-2*m*r*v1*c*cos(-r1+r2)+m*r*v2*c*cos(-r1+r2); 
+RHS2 = -m*r*v1*c*cos(r1)+I*v1-I*v2-m*c*l*v1+m*c^2*v1; 
 
 MM = [M11 M12;                               
      M21 M22];    
@@ -268,9 +279,9 @@ end
 direction=-1; % The t_final can be approached by any direction is indicated by the direction
 % direction=-1 ではイベント関数(in this case, gstop.)が減少している零点のみが検出されます。
 
-
+% 以下でpoincare mapを利用した安定性解析を行っている。ただしヤコビアンを出しているだけ。判定はしていない。
 %===================================================================
-function J=partialder(FUN,z,walker)
+function J=partialder(FUN,z,walker) % FUN=onestepのこと。
 %===================================================================
 pert=1e-5;%pertuabation 
 n = length(z);
@@ -288,8 +299,9 @@ J = zeros(n,n);
 %%% Using central difference, accuracy quadratic %%%
 for i=1:n
     ztemp1=z; ztemp2=z;
-    ztemp1(i)=ztemp1(i)+pert; 
-    ztemp2(i)=ztemp2(i)-pert; 
-    J(:,i)=(feval(FUN,ztemp1,walker)-feval(FUN,ztemp2,walker)) ;
+    ztemp1(i)=ztemp1(i)+pert;  %θだけをpert分動かして偏微分（偏差分）している。
+    ztemp2(i)=ztemp2(i)-pert;  %θdot 〃
+    J(:,i)=(feval(FUN,ztemp1,walker)-feval(FUN,ztemp2,walker)) ; %それぞれonestepで計算させてその差分についてのヤコビアンを導出。
 end
-J=J/(2*pert);
+J=J/(2*pert); %次元合わせ。
+
