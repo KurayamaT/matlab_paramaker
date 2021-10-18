@@ -60,7 +60,7 @@ walker.c = 0.425 ; walker.r = 0.1; walker.g = .98;  ; walker.gam = 0.009;
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%
-steps = 10; %number of steps to animate
+steps = 3; %number of steps to animate
 fps = 10; %Use low frames per second for low gravity
 
 
@@ -130,7 +130,7 @@ end
 J=J/(2*pert);
 
 %===================================================================
-function [z,t]=onestep(z0,walker,steps)
+function [z,t,time_length]=onestep(z0,walker,steps)
 %===================================================================
 
 M = walker.M;  m = walker.m; I = walker.I;   
@@ -161,15 +161,26 @@ u2 = z0(4);
 z0 = [q1 u1 q2 u2 TE xh vxh yh vyh];
 
 t0 = 0; 
-dt = 5; %might need to be changed based on time taken for one step
+dt = 5; %might need to be changed based on time taken for one step %msec?
 time_stamps = 100;
+% dt =5, time_stamps = 100 なので、100÷5＝20
 t_ode = t0;
 z_ode = z0;
-
+    options=odeset('abstol',1e-13,'reltol',1e-13,'events',@collision);
+    %@collision関数で設定された条件（event）で計算停止を指示。
+    tspan = linspace(t0,t0+dt,time_stamps);
+    %y = linspace(x1,x2,n) は、x1 ～ x2 の間の等間隔の点を n 個含む行ベクトルを返します。
+    [t_temp, z_temp] = ode113(@single_stance,tspan,z0,options,walker);
+    % ode113⇒初期値を方程式に適用し、tspanの範囲で積分している
+    % [t,y] = ode113(odefun,tspan,y0) は、tspan = [t0 tf] のときに、
+    % 初期条件 y0 を使用して、微分方程式系 y′=f(t,y) を t0 から tf まで積分します。
+    % 解の配列 y の各行は、列ベクトル t に返される値に対応します。
+    % すなわち時間t(t_temp)と、積分値y(z_temp)を出力する
 for i=1:steps
     options=odeset('abstol',1e-13,'reltol',1e-13,'events',@collision);
-    tspan = linspace(t0,t0+dt,time_stamps);
+    tspan = linspace(t0,t0+dt,time_stamps); % 5/100になってます。t0からdtまで（0-5）を100に分けろや。という意味。
     [t_temp, z_temp] = ode113(@single_stance,tspan,z0,options,walker);
+    % シングルスタンス2回分で1ストライドで、シングルスタンス一回につき0
     
     zplus=heelstrike(t_temp(end),z_temp(end,:),walker); 
     
@@ -189,7 +200,8 @@ if flag==1
    t=t_ode;
    
    save time.mat t
-%    disp(t)
+   time_length = length(t);
+ %    disp(t)
 %    mt = median(t)
 %    disp(mt)
 end
@@ -197,6 +209,8 @@ end
 %===================================================================
 function zdot=single_stance(t,z,walker)  
 %===================================================================
+
+disp(t)
 
 q1 = z(1);   u1 = z(2);                         
 q2 = z(3);   u2 = z(4);                         
@@ -207,13 +221,14 @@ M = walker.M;  m = walker.m; I = walker.I;
 l = walker.l;  c = walker.c; w = walker.w;   
 r = walker.r;  g = walker.g; gam = walker.gam;
 
-disp(median(t))
 
-if t > median(t)
-Th=0.1;   %external hip torque, if needed               
-else
-Th = 0;    
-end
+% if t > t(length(t)/2)
+% Th=0.1;   %external hip torque, if needed               
+% else
+% Th = 0;    
+% end
+
+Th = 0.1;
 
 M11 = -2*w^2*m-2*I+2*m*l*c*cos(q2)+2*m*w*l*sin(q2)-2*m*c^2-2*m*l^2-M*l^2+2*m*l*c-2*m*r^2-M*r^2+2*m*r*c*cos(q1-q2)-2*m*r*w*sin(q1-q2)-2*M*r*l*cos(q1)-4*m*r*l*cos(q1)+2*m*r*c*cos(q1)-2*m*r*w*sin(q1); 
 M12 = w^2*m+I-m*l*c*cos(q2)-m*w*l*sin(q2)+m*c^2-m*r*c*cos(q1-q2)+m*r*w*sin(q1-q2); 
