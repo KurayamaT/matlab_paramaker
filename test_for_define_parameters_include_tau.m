@@ -46,11 +46,11 @@ if flag == 1
     %% c = COM on the leg from hip, w = COM fore-aft offset, r = radius of feet
     %% M = hip mass, m = leg mass, I = leg inertia, l = leg length
 walker.M = 56 ; walker.m = 12; walker.I = .78 ; walker.l = .84; walker.w = 0.0; 
-walker.c = 0.425 ; walker.r = 0.1; walker.g = .98;  ; walker.gam = 0.009;
+walker.c = 0.425 ; walker.r = 0.1; walker.g = 9.8;  walker.gam = 0.1155;
     
     
     %%%% Initial State %%%%%
-    q1 = 0.2; u1 = -0.3;
+    q1 = 0.3604; u1 = -0.3736;
     q2 = 0.4; u2 = -0.3;
     
     z0 = [q1 u1 q2 u2];
@@ -60,7 +60,7 @@ walker.c = 0.425 ; walker.r = 0.1; walker.g = .98;  ; walker.gam = 0.009;
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%
-steps = 3; %number of steps to animate
+steps = 1; %number of steps to animate
 fps = 10; %Use low frames per second for low gravity
 
 
@@ -78,7 +78,7 @@ end
 %%% Stability, using eigenvalues of Poincare map %%%
 J=partialder(@onestep,zstar,walker);
 disp('EigenValues for linearized map are');
-eig(J)
+eig(J);
  
 %%%% Get data for all the steps %%%
 [z,t] = onestep(zstar,walker,steps);
@@ -130,7 +130,7 @@ end
 J=J/(2*pert);
 
 %===================================================================
-function [z,t,time_length]=onestep(z0,walker,steps)
+function [z,t]=onestep(z0,walker,steps)
 %===================================================================
 
 M = walker.M;  m = walker.m; I = walker.I;   
@@ -163,7 +163,6 @@ z0 = [q1 u1 q2 u2 TE xh vxh yh vyh];
 t0 = 0; 
 dt = 5; %might need to be changed based on time taken for one step %msec?
 time_stamps = 100;
-% dt =5, time_stamps = 100 なので、100÷5＝20
 t_ode = t0;
 z_ode = z0;
     options=odeset('abstol',1e-13,'reltol',1e-13,'events',@collision);
@@ -184,6 +183,12 @@ for i=1:steps
     
     zplus=heelstrike(t_temp(end),z_temp(end,:),walker); 
     
+    dimensional_time = t_temp(end)/sqrt(g/l);
+    t_step =t_temp(end); % time
+    d_step = 2*(l+r)*sin(q1);
+    v_step = d_step/t_step;
+
+    
     z0 = zplus;
     t0 = t_temp(end);
     
@@ -199,18 +204,15 @@ if flag==1
    z=z_ode;
    t=t_ode;
    
-   save time.mat t
-   time_length = length(t);
- %    disp(t)
-%    mt = median(t)
-%    disp(mt)
+   save time.mat t;
+
 end
 
 %===================================================================
 function zdot=single_stance(t,z,walker)  
 %===================================================================
 
-disp(t)
+disp(t);
 
 q1 = z(1);   u1 = z(2);                         
 q2 = z(3);   u2 = z(4);                         

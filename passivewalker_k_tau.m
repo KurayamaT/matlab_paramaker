@@ -63,6 +63,7 @@ else
 J=partialder(@onestep,zstar,gamth);
 ramda = eig(J);
 ramda_abs_max = max(abs(ramda));
+
 % if ramda_abs_max < 1
 disp(str_zstar2);
 % disp('Limitcycle is stable.')
@@ -77,6 +78,7 @@ disp(ramda_abs_max)
   out = ('MotionDataResults_tau');
   csvwrite(fullfile(out,csv_filename),onestep_parameter);   
 % end
+
 end
         end
         end
@@ -104,7 +106,15 @@ function csv_filename = filenamer(z0,gamth)
 %===================================================================
 function [z,t]=onestep(z0,gamth,~)
 %===================================================================
-
+M = 56; %[kg]
+m = 12; %[kg]
+I =  .78; %[kg・m^2]
+l  = .84;   %[m]
+w = 0; %[m]
+c = .42;  %[m]
+r = .1;  %[m]
+g = .98;  %[1N]
+    
 flag = 1;
 if nargin<2
     error('need more inputs to onestep');
@@ -139,6 +149,14 @@ z_ode = z0;
     
     % call heelstrike 
     zplus=heelstrike(t_temp(end),z_temp(end,:)); %　>>最終行を付加。
+    %step=1の場合、ここの t_temp(end) というものが、この周期にかかった一歩の時間。
+    
+    dimensional_time = t_temp(end)*sqrt(l/g)
+    t_step =dimensional_time % time
+    d_step = 2*(l+r)*sin(q1)
+    v_step = d_step/t_step;
+    disp v_step
+    disp(v_step)
     
     %%%次の回転の初期値。一周しかしない場合は不要%%%
 %     z0 = zplus;
