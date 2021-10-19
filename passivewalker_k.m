@@ -49,7 +49,7 @@ steps = 1; %number of steps to animate
 % fps = 10; %Use low frames per second for low gravity
 
 %%%% Root finding, Period one gait %%%%
-options = optimset('TolFun',1e-12,'TolX',1e-12,'Display','off');
+options = optimset('TolFun',1e-12,'TolX',1e-12,'Display','off','SubproblemAlgorithm','ldl-factorization');
 [zstar,~,exitflag] = fsolve(@fixedpt,z0,options,gam);
 if exitflag ~= 1
     continue

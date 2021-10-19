@@ -46,11 +46,11 @@ if flag == 1
     %% c = COM on the leg from hip, w = COM fore-aft offset, r = radius of feet
     %% M = hip mass, m = leg mass, I = leg inertia, l = leg length
 walker.M = 56 ; walker.m = 12; walker.I = .78 ; walker.l = .84; walker.w = 0.0; 
-walker.c = 0.425 ; walker.r = 0.1; walker.g = 9.8;  walker.gam = 0.1155;
+walker.c = 0.425 ; walker.r = 0.1; walker.g = 9.8;  walker.gam = 0.1;
     
     
     %%%% Initial State %%%%%
-    q1 = 0.3604; u1 = -0.3736;
+    q1 = 0.3; u1 = -0.3;
     q2 = 0.4; u2 = -0.3;
     
     z0 = [q1 u1 q2 u2];
@@ -80,8 +80,18 @@ J=partialder(@onestep,zstar,walker);
 disp('EigenValues for linearized map are');
 eig(J);
  
+
 %%%% Get data for all the steps %%%
 [z,t] = onestep(zstar,walker,steps);
+% %%%
+l  = .84;   %[m]
+g = 9.8;  %[1N]length = l;
+coeff = sqrt(l/g);
+onestep_parameter = cat(2,coeff*t,z);
+%%%
+save onestep_parameter.mat onestep_parameter
+
+
 
 %%% Animate result %%%
 disp('Animating...');
@@ -167,7 +177,7 @@ t_ode = t0;
 z_ode = z0;
     options=odeset('abstol',1e-13,'reltol',1e-13,'events',@collision);
     %@collision関数で設定された条件（event）で計算停止を指示。
-    tspan = linspace(t0,t0+dt,time_stamps);
+    tspan = linspace(t0,t0+dt,time_stamps); %ここで作っているのが「ｔ」です！
     %y = linspace(x1,x2,n) は、x1 ～ x2 の間の等間隔の点を n 個含む行ベクトルを返します。
     [t_temp, z_temp] = ode113(@single_stance,tspan,z0,options,walker);
     % ode113⇒初期値を方程式に適用し、tspanの範囲で積分している
@@ -183,12 +193,11 @@ for i=1:steps
     
     zplus=heelstrike(t_temp(end),z_temp(end,:),walker); 
     
-    dimensional_time = t_temp(end)/sqrt(g/l);
+    
     t_step =t_temp(end); % time
     d_step = 2*(l+r)*sin(q1);
     v_step = d_step/t_step;
-
-    
+        
     z0 = zplus;
     t0 = t_temp(end);
     
@@ -198,21 +207,19 @@ for i=1:steps
     
 end
 
+
 z = zplus(1:4);
 
 if flag==1
    z=z_ode;
    t=t_ode;
    
-   save time.mat t;
 
 end
 
 %===================================================================
 function zdot=single_stance(t,z,walker)  
 %===================================================================
-
-disp(t);
 
 q1 = z(1);   u1 = z(2);                         
 q2 = z(3);   u2 = z(4);                         

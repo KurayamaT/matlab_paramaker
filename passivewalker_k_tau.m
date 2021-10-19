@@ -20,15 +20,15 @@
 function passivewalker_k_tau(q,u,gamma,tau)
 
 tic
-
+    
 % motionデータ保存用のフォルダ確保
 try rmdir MotionDataResults_tau s;% フォルダが無くてもsustainさせるため
 catch 
 end
 mkdir MotionDataResults_tau;
 
-parfor k = 1:length(gamma)
-    for m = 1:length(tau)
+for k = 1:length(gamma)
+    parfor m = 1:length(tau)
         for i = 1:length(q)
            for j = 1:length(u)
             kmij = append(num2str(k),'_',num2str(m),'_',num2str(i),'_',num2str(j));
@@ -64,20 +64,35 @@ J=partialder(@onestep,zstar,gamth);
 ramda = eig(J);
 ramda_abs_max = max(abs(ramda));
 
-% if ramda_abs_max < 1
+if ramda_abs_max < 1
 disp(str_zstar2);
-% disp('Limitcycle is stable.')
-% disp('Motion data will be exported as a CSV file.')
-% disp('ramda max value is below↓')
+disp('Limitcycle is stable.')
+disp('Motion data will be exported as a CSV file.')
+disp('ramda max value is below↓')
 disp(ramda_abs_max)
 
 %%%% Get data of leg motion. %%%
   csv_filename = filenamer(z0,gamth);
-  [z,~] = onestep(zstar,gamth,steps);
-  onestep_parameter = z;
+  [z,t,Th] = onestep(zstar,gamth,steps);
+% %%%
+l  = .84;   %[m]
+g = 9.8;  %[1N]length = l;
+coeff = sqrt(l/g);
+onestep_parameter = cat(2,coeff*t,z);
+%%%
   out = ('MotionDataResults_tau');
-  csvwrite(fullfile(out,csv_filename),onestep_parameter);   
-% end
+  csvwrite(fullfile(out,csv_filename),onestep_parameter);  
+  
+jikann = onestep_parameter(end,1);
+michinori = 2*sin(onestep_parameter(1,2));
+sokudo = michinori/jikann;
+disp sokudo
+disp(sokudo)
+disp Th
+disp(Th) 
+end
+
+
 
 end
         end
@@ -104,7 +119,7 @@ function csv_filename = filenamer(z0,gamth)
 %===================================================================
 
 %===================================================================
-function [z,t]=onestep(z0,gamth,~)
+function [z,t,Th]=onestep(z0,gamth,~)
 %===================================================================
 M = 56; %[kg]
 m = 12; %[kg]
@@ -113,7 +128,7 @@ l  = .84;   %[m]
 w = 0; %[m]
 c = .42;  %[m]
 r = .1;  %[m]
-g = .98;  %[1N]
+g = 9.8;  %[1N]
     
 flag = 1;
 if nargin<2
@@ -130,7 +145,9 @@ u2 = z0(4);
 z0 = [q1 u1 q2 u2];
 
 t0 = 0; 
-dt = 5; %計算間隔　might need to be changed based on time taken for one step
+dt = 10; % とりあえず積分するために与えてる、（√（l/g））が付されたrescaled timeの計算範囲。
+            % 大まか5*√（l/g）[sec]あれば足りるので、「5」が付与されている。
+            % 結局、gstopでheelstrikeで止められてしまうので、計算範囲はそこでストップする
 time_stamps = 1000; %計算終了回数
 t_ode = t0;
 z_ode = z0;
@@ -141,7 +158,7 @@ z_ode = z0;
     %@collision関数で設定された条件（event）で計算停止を指示。
     tspan = linspace(t0,t0+dt,time_stamps);
     %y = linspace(x1,x2,n) は、x1 ～ x2 の間の等間隔の点を n 個含む行ベクトルを返します。
-    [t_temp, z_temp] = ode113(@single_stance,tspan,z0,options,gamth);
+    [t_temp, z_temp, Th] = ode113(@single_stance,tspan,z0,options,gamth);
     % ode113⇒初期値を方程式に適用し、tspanの範囲で積分している
     % [t,y] = ode113(odefun,tspan,y0) は、tspan = [t0 tf] のときに、
     % 初期条件 y0 を使用して、微分方程式系 y′=f(t,y) を t0 から tf まで積分します。
@@ -151,13 +168,7 @@ z_ode = z0;
     zplus=heelstrike(t_temp(end),z_temp(end,:)); %　>>最終行を付加。
     %step=1の場合、ここの t_temp(end) というものが、この周期にかかった一歩の時間。
     
-    dimensional_time = t_temp(end)*sqrt(l/g)
-    t_step =dimensional_time % time
-    d_step = 2*(l+r)*sin(q1)
-    v_step = d_step/t_step;
-    disp v_step
-    disp(v_step)
-    
+      
     %%%次の回転の初期値。一周しかしない場合は不要%%%
 %     z0 = zplus;
 %     t0 = t_temp(end);
@@ -177,21 +188,21 @@ end
 
 %%% 運動方程式の担当 %%%
 %===================================================================
-function zdot=single_stance(~,z,gamth)  
+function [zdot,Th]=single_stance(~,z,gamth)  
 %===================================================================
 
 q1 = z(1);   u1 = z(2);                         
 q2 = z(3);   u2 = z(4);                         
 gam = gamth(1); th = gamth(2);
 
-    M = 56; %[kg]
-    m = 12; %[kg]
-      I =  .78; %[kg・m^2]
-    l  = .84;   %[m]
-    w = 0; %[m]
-    c = .42;  %[m]
-    r = .1;  %[m]
-    g = .98;  %[1N]
+M = 56; %[kg]
+m = 12; %[kg]
+I =  .78; %[kg・m^2]
+l  = .84;   %[m]
+w = 0; %[m]
+c = .42;  %[m]
+r = .1;  %[m]
+g = 9.8;  %[1N]
     
 % 運動方程式の定義：I=w＝r=0、c=l（※l-aにてa＝0：池俣fig4.1）、で式を整理すると、池俣p20の、M11と完全に一致する！！！→20210809確認
 % M11 = -1*(-2*w^2*m-2*I+2*m*l*c*cos(q2)+2*m*w*l*sin(q2)-2*m*c^2-2*m*l^2-M*l^2+2*m*l*c-2*m*r^2-M*r^2+2*m*r*c*cos(q1-q2)-2*m*r*w*sin(q1-q2)-2*M*r*l*cos(q1)-4*m*r*l*cos(q1)+2*m*r*c*cos(q1)-2*m*r*w*sin(q1)); 
@@ -205,13 +216,19 @@ M22 = -1*(m*c^2+I);
 
 
 % External hip torque = th.
+if q1<0
+    Th = th;
+else
+    Th = 0;
+end
+
 % 以下は同じく池俣式のHとGに該当する
 % RHS1 = -2*m*r*u1*u2*c*sin(q1-q2)-2*m*r*u1*u2*w*cos(q1-q2)+m*r*u1^2*w*cos(q1)+m*r*u1^2*c*sin(q1)-2*m*r*l*sin(q1)*u1^2+M*g*sin(gam)*r+2*m*g*sin(gam)*r+m*r*u2^2*w*cos(q1-q2)+m*r*u2^2*c*sin(q1-q2)+m*r*u1^2*w*cos(q1-q2)+m*r*u1^2*c*sin(q1-q2)-M*r*l*sin(q1)*u1^2+M*g*l*sin(gam-q1)+2*m*g*l*sin(gam-q1)-m*g*c*sin(gam-q1)+m*g*w*cos(gam-q1)-m*g*c*sin(gam-q1+q2)+m*g*w*cos(gam-q1+q2)-2*m*l*u1*u2*w*cos(q2)-m*l*u2^2*c*sin(q2)+2*m*l*u1*u2*c*sin(q2)+m*l*u2^2*w*cos(q2); 
 % RHS2 = -m*g*c*sin(gam-q1+q2)+m*g*w*cos(gam-q1+q2)-Th-m*l*u1^2*w*cos(q2)+m*l*u1^2*c*sin(q2); 
 
 RHS1 = -2*m*r*u1*u2*c*sin(q1-q2)+m*r*u1^2*c*sin(q1)-2*m*r*l*sin(q1)*u1^2+M*g*sin(gam)*r+2*m*g*sin(gam)*r+m*r*u2^2*c*sin(q1-q2)+m*r*u1^2*c*sin(q1-q2)-M*r*l*sin(q1)*u1^2+M*g*l*sin(gam-q1)+2*m*g*l*sin(gam-q1)-m*g*c*sin(gam-q1)-m*g*c*sin(gam-q1+q2)-m*l*u2^2*c*sin(q2)+2*m*l*u1*u2*c*sin(q2); 
-% RHS2 = -m*g*c*sin(gam-q1+q2)-th+m*l*u1^2*c*sin(q2); 
-RHS2 = -m*g*c*sin(gam-q1+q2)+m*l*u1^2*c*sin(q2); 
+RHS2 = -m*g*c*sin(gam-q1+q2)-Th+m*l*u1^2*c*sin(q2); 
+%RHS2 = -m*g*c*sin(gam-q1+q2)+m*l*u1^2*c*sin(q2); 
 
 MM = [M11 M12;                               
       M21 M22];                               
@@ -244,15 +261,15 @@ r2 = z(3);   v2 = z(4);
 q1 = r1 - r2;                         
 q2 = -r2;                                       
 
-    M = 56; %[kg]
-    m = 12; %[kg]
-      I =  .78; %[kg・m^2]
-    l  = .84;   %[m]
-    w = 0; %[m]
-    c = .42;  %[m]
-    r = .1;  %[m]
-    g = .98;  %[1N]    
-
+M = 56; %[kg]
+m = 12; %[kg]
+I =  .78; %[kg・m^2]
+l  = .84;   %[m]
+w = 0; %[m]
+c = .42;  %[m]
+r = .1;  %[m]
+g = 9.8;  %[1N]
+    
 % M11 = 2*m*l^2-2*m*l*c+2*m*c^2+2*m*w^2+2*m*r^2+4*m*r*l*cos(q1)-2*m*r*c*cos(q1)+2*m*w*sin(q1)*r-2*m*l*c*cos(q2)-2*m*l*w*sin(q2)-2*m*r*c*cos(q1-q2)+2*m*sin(q1-q2)*w*r+M*l^2+2*M*r*l*cos(q1)+M*r^2+2*I; 
 % M12 = m*l*c*cos(q2)+m*l*w*sin(q2)-m*c^2-m*w^2+m*r*c*cos(q1-q2)-m*sin(q1-q2)*w*r-I; 
 M11 = 2*m*l^2-2*m*l*c+2*m*c^2+2*m*r^2+4*m*r*l*cos(q1)-2*m*r*c*cos(q1)-2*m*l*c*cos(q2)-2*m*r*c*cos(q1-q2)+M*l^2+2*M*r*l*cos(q1)+M*r^2+2*I; 
@@ -289,7 +306,7 @@ q1 = z(1); q2 = z(3);
 
 gstop = -q2 + 2*q1;%毎回の計算におけるgstopの値を検査（gstop=0を検出。「イベントを記述する数式です。value(i) がゼロに等しくなると、イベントが発生します。」）
 if (q2>-0.05) %allow legs to pass through for small hip angles (taken care in real walker using stepping stones)
-    isterminal = 0;%股関節の角度が小さい時はカウントしない。
+    isterminal = 0;%股関節の角度が小さい時はカウントしない。脚がすれ違う時は止めないためのやつ。
 else%そうでない場合は
     isterminal=1; %ode should terminate is conveyed by 1, if you put 0 it goes till the final time u specify
     %　isterminal＝＝１で計算ストップ

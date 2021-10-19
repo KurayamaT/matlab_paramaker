@@ -15,7 +15,7 @@ u  = u_start:(u_end-u_start)/u_points:u_end;
 gamma = gam_start:(gam_end-gam_start)/gam_points:gam_end;
 tau = tau_start:(tau_end-tau_start)/tau_point:tau_end;
 
-total_calctimes = q_points * u_points * gam_points * tau_point;
+total_calctimes = (q_points+1) * (u_points+1) * (gam_points+1) * (tau_point+1);
 disp(total_calctimes); 
 passivewalker_k_tau(q,u,gamma,tau);
 %  save q1.mat q;
@@ -31,6 +31,8 @@ passivewalker_k_tau(q,u,gamma,tau);
 
 %20211019PM1
 %paramaker_k_tau(0.3,0.4,10, -0.4, -0.3, 10, 0.087, 0.122, 10, 0.01, 0.1, 10)
+%20211019PM2
+%paramaker_k_tau(0.36,0.37,1, -0.37, -0.38, 1, 0.115, 0.116, 1, 0.01, 0.1, 10)
 
 
 
