@@ -64,7 +64,7 @@ J=partialder(@onestep,zstar,gamth);
 ramda = eig(J);
 ramda_abs_max = max(abs(ramda));
 
-if ramda_abs_max < 1
+%if ramda_abs_max < 1
 disp(str_zstar2);
 disp('Limitcycle is stable.')
 disp('Motion data will be exported as a CSV file.')
@@ -90,7 +90,7 @@ disp sokudo
 disp(sokudo)
 disp Th
 disp(Th) 
-end
+%end
 
 
 
