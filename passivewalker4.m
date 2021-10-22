@@ -9,7 +9,7 @@
 
 
 function passivewalker(flag)  
-
+warning off
 clc
 clear all
 close all
@@ -18,10 +18,10 @@ format long
 if nargin == 0
     flag = 1; %simulates simplest walker by default
 end
-%for i=1:101
-for i=1:1
-%gamma = 0.14 + 0.001*(i-1);
-gamma = 0.187;
+for i=1:501
+%for i=1:1
+gamma = 0.16 + 0.001*(i-1);
+%gamma = 0.167;
 disp(gamma);
 try
 if flag == 1
@@ -78,18 +78,20 @@ end
 
 %%% Stability, using eigenvalues of Poincare map %%%
 J=partialder(@onestep,zstar,walker);
-disp('EigenValues for linearized map are');
-eig(J)
- 
+% disp('EigenValues for linearized map are');
+eig(J);
+ramda = eig(J);
+ramda_abs_max = max(abs(real(ramda)));
+if ramda_abs_max <1
 %%%% Get data for all the steps %%%
 [z,t] = onestep(zstar,walker,steps);
 for i=1:size(t)
 fprintf("%.20f %.20f %.20f %.20f %.20f \n",t(i),z(i,1),z(i,2),z(i,3),z(i,4));
 end
 fprintf("\n");
-%%% Animate result %%%
-disp('Animating...');
-animate(t,z,walker,steps,fps);
+% %%% Animate result %%%
+% disp('Animating...');
+% animate(t,z,walker,steps,fps);
 
 %%% Plot data %%%
 disp('Some plots...')
@@ -97,6 +99,7 @@ plot(t,z(:,1),'r',t,z(:,3),'b')
 xlabel('time'); ylabel('Angle (rad)');
 legend('Stance Angle','Swing Angle');
 title('State variables vs time for passive walker');
+end
 catch
     continue;
 end
