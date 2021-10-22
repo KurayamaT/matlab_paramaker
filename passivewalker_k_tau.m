@@ -27,8 +27,8 @@ catch
 end
 mkdir MotionDataResults_tau;
 
-for k = 1:length(gamma)
-    parfor m = 1:length(tau)
+parfor k = 1:length(gamma)
+    for m = 1:length(tau)
         for i = 1:length(q)
            for j = 1:length(u)
             kmij = append(num2str(k),'_',num2str(m),'_',num2str(i),'_',num2str(j));
@@ -52,6 +52,8 @@ steps = 1; %number of steps to animate
 %%%% Root finding, Period one gait %%%%
 options = optimset('TolFun',1e-12,'TolX',1e-12,'Display','off');
 [zstar,~,exitflag] = fsolve(@fixedpt,z0,options,gamth);
+% 与えられた方程式（ここではfixedpt）＝0となるような、方程式を満たすパラメータを見つける（方程式を解く）
+% ここでは1次のpoincare map ＝ 0となるようなq,uなどの値を求めている。
 if exitflag ~= 1
     continue
 else
@@ -126,7 +128,7 @@ m = 12; %[kg]
 I =  .78; %[kg・m^2]
 l  = .84;   %[m]
 w = 0; %[m]
-c = .42;  %[m]
+c = .425;  %[m]
 r = .1;  %[m]
 g = 9.8;  %[1N]
     
@@ -254,7 +256,8 @@ zdot = [u1 ud1 u2 ud2]';  %[θ’ θ'' φ’ φ''　 ]
 %===================================================================
 function zplus=heelstrike(~,z)      
 %===================================================================
-
+% onestepで計算された一歩分のパラメータの最終値を受け取って、次の一歩のための初期値を再計算している部分
+%　立脚遊脚が入れ替わるので、q1->r1, u1->v1等と変数変換している。
 r1 = z(1);   v1 = z(2);                         
 r2 = z(3);   v2 = z(4);                         
 

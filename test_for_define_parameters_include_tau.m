@@ -46,11 +46,11 @@ if flag == 1
     %% c = COM on the leg from hip, w = COM fore-aft offset, r = radius of feet
     %% M = hip mass, m = leg mass, I = leg inertia, l = leg length
 walker.M = 56 ; walker.m = 12; walker.I = .78 ; walker.l = .84; walker.w = 0.0; 
-walker.c = 0.425 ; walker.r = 0.1; walker.g = 9.8;  walker.gam = 0.1;
+walker.c = 0.425 ; walker.r = 0.1; walker.g = 9.8;  walker.gam = 0.155;
     
     
     %%%% Initial State %%%%%
-    q1 = 0.3; u1 = -0.3;
+    q1 = 0.2; u1 = -0.2;
     q2 = 0.4; u2 = -0.3;
     
     z0 = [q1 u1 q2 u2];
@@ -192,29 +192,32 @@ for i=1:steps
     % シングルスタンス2回分で1ストライドで、シングルスタンス一回につき0
     
     zplus=heelstrike(t_temp(end),z_temp(end,:),walker); 
+    % 次の一歩目のθ+とかを計算する。コリジョンルールーを使って。
+    % ヒールストライクに積分値の最終値を代入して、θ+、θdot+など（z_plus）を計算する
+    % その値が次の初期値（「z0」）になる。10行くらい下で。
+    % この行列は一行しかない。
     
     
     t_step =t_temp(end); % time
     d_step = 2*(l+r)*sin(q1);
     v_step = d_step/t_step;
         
-    z0 = zplus;
-    t0 = t_temp(end);
+     z0 = zplus; %heelstrikeで計算されたθ+とかが次の計算のための初期値になる
+     t0 = t_temp(end); %時間については
     
     %%%%% Ignore time stamps for heelstrike and first integration point
-    t_ode = [t_ode; t_temp(2:end)];
-    z_ode = [z_ode; z_temp(2:end,:)];
+    t_ode = [t_ode; t_temp(2:end)];  %一行目は消して、一歩分のデータをt_odeに縦向きに連結していく
+    z_ode = [z_ode; z_temp(2:end,:)]; %ここでため込まれた積分値が、z, tとなって最終的に終了する10行下で。
     
 end
 
 
-z = zplus(1:4);
+z = zplus(1:4); %[q1 u1 q2 u2]です。　次のz0です。なので、以下でz_odeに変数変換され、次回のループで
+                        % t_ode = t0;　z_ode = z0;　という風に呼び出されて計算初期値として使われます。
 
 if flag==1
-   z=z_ode;
-   t=t_ode;
-   
-
+    z=z_ode;
+    t=t_ode;
 end
 
 %===================================================================
@@ -291,6 +294,7 @@ r1 = z(1);   v1 = z(2);
 r2 = z(3);   v2 = z(4);                         
 xh = z(6);   yh = z(8);                       
 
+% 初期値という意味合いは無く、計算式の都合上q1とかq2を使っている？
 q1 = r1 - r2;                         
 q2 = -r2;                                       
 
@@ -321,6 +325,7 @@ TE = 1/2*m*(((-l*cos(q1)-r)*u1-u1*(-c*cos(q1)+w*sin(q1)))^2+(-l*sin(q1)*u1+u1*(c
 vxh = (-l*cos(q1)-r)*u1; 
 vyh = -l*sin(q1)*u1; 
 
+%次の一歩のための初期値を出力
 zplus = [q1 u1 q2 u2 TE xh vxh yh vyh];                     
 
 
