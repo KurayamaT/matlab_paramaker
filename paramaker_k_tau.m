@@ -9,11 +9,29 @@ format long;
 % delete q1.mat;
 % delete u1.mat;
 % delete gam.mat;
-
+if q_start == q_end
+q = q_start;
+else
 q  = q_start:(q_end-q_start)/q_points:q_end;
+end
+
+if u_start == u_end
+    u = u_start;
+else
 u  = u_start:(u_end-u_start)/u_points:u_end;
+end
+
+if gam_start == gam_end
+    gamma = gam_start;
+else
 gamma = gam_start:(gam_end-gam_start)/gam_points:gam_end;
+end
+
+if tau_start == tau_end
+    tau = tau_start;
+else
 tau = tau_start:(tau_end-tau_start)/tau_point:tau_end;
+end
 
 total_calctimes = (q_points+1) * (u_points+1) * (gam_points+1) * (tau_point+1);
 disp(total_calctimes); 

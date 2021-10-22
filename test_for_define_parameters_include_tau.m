@@ -46,13 +46,13 @@ if flag == 1
     %% c = COM on the leg from hip, w = COM fore-aft offset, r = radius of feet
     %% M = hip mass, m = leg mass, I = leg inertia, l = leg length
 walker.M = 56 ; walker.m = 12; walker.I = .78 ; walker.l = .84; walker.w = 0.0; 
-walker.c = 0.425 ; walker.r = 0.1; walker.g = 9.8;  walker.gam = 0.155;
+walker.c = 0.42 ; walker.r = 0.1; walker.g = 9.8;  walker.gam = 0.14;
     
     
     %%%% Initial State %%%%%
-    q1 = 0.2; u1 = -0.2;
-    q2 = 0.4; u2 = -0.3;
-    
+    q1 = 0.35; u1 = -2.8;
+    q2 =  2*q1; % φ　　 最初の股角度
+    u2 =  -1*u1*(1-cos(q2)); % φdot 最初の股角速度
     z0 = [q1 u1 q2 u2];
     %% Root finding will give this stable root 
     %zstar = [0.189472782205104  -0.239124222551699   0.378945564410209  -0.053691703909393];
@@ -60,7 +60,7 @@ walker.c = 0.425 ; walker.r = 0.1; walker.g = 9.8;  walker.gam = 0.155;
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%
-steps = 1; %number of steps to animate
+steps = 20; %number of steps to animate
 fps = 10; %Use low frames per second for low gravity
 
 
@@ -78,7 +78,7 @@ end
 %%% Stability, using eigenvalues of Poincare map %%%
 J=partialder(@onestep,zstar,walker);
 disp('EigenValues for linearized map are');
-eig(J);
+eig(J)
  
 
 %%%% Get data for all the steps %%%
@@ -240,7 +240,11 @@ r = walker.r;  g = walker.g; gam = walker.gam;
 % Th = 0;    
 % end
 
-Th = 0.1;
+if q1<0
+    Th = 0.20333;
+else
+    Th = 0;
+end
 
 M11 = -2*w^2*m-2*I+2*m*l*c*cos(q2)+2*m*w*l*sin(q2)-2*m*c^2-2*m*l^2-M*l^2+2*m*l*c-2*m*r^2-M*r^2+2*m*r*c*cos(q1-q2)-2*m*r*w*sin(q1-q2)-2*M*r*l*cos(q1)-4*m*r*l*cos(q1)+2*m*r*c*cos(q1)-2*m*r*w*sin(q1); 
 M12 = w^2*m+I-m*l*c*cos(q2)-m*w*l*sin(q2)+m*c^2-m*r*c*cos(q1-q2)+m*r*w*sin(q1-q2); 
