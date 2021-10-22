@@ -20,8 +20,8 @@ if nargin == 0
 end
 for i=1:501
 %for i=1:1
-gamma = 0.16 + 0.001*(i-1);
-%gamma = 0.167;
+gamma = 0.005 + 0.001*(i-1);
+%gamma = 0.233;
 disp(gamma);
 try
 if flag == 1
