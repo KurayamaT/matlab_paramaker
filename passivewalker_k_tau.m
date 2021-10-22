@@ -68,11 +68,11 @@ else
 %   disp(str_z0)
 
 % %%% Stability, using eigenvalues of Poincare map %%%
-% J=partialder(@onestep,zstar,gamth);
-% ramda = eig(J);
-% ramda_abs_max = max(abs(ramda));
+J=partialder(@onestep,zstar,gamth);
+ramda = eig(J);
+ramda_abs_max = max(abs(ramda))
 
-%if ramda_abs_max < 1
+if ramda_abs_max < 1
 disp(str_zstar2);
 disp('Limitcycle is stable.')
 disp('Motion data will be exported as a CSV file.')
@@ -82,27 +82,22 @@ disp(ramda_abs_max)
 %%%% Get data of leg motion. %%%
   csv_filename = filenamer(z0,gamth);
   [z,t,Th] = onestep(zstar,gamth,steps);
-% % %%%
-% l  = .84;   %[m]
-% g = 9.8;  %[1N]length = l;
-% coeff = sqrt(l/g);
-% onestep_parameter = cat(2,coeff*t,z);
-% %%%
+
   out = ('MotionDataResults_tau');
   csvwrite(fullfile(out,csv_filename),onestep_parameter);  
   
-% jikann = onestep_parameter(end,1);
-% michinori = 2*sin(onestep_parameter(1,2));
-% sokudo = michinori/jikann;
-% disp sokudo
-% disp(sokudo)
-% disp Th
-% disp(Th) 
-%end
+ jikann = onestep_parameter(end,1);
+ michinori = 2*sin(onestep_parameter(1,2));
+ sokudo = michinori/jikann;
+ disp sokudo
+ disp(sokudo)
+ disp Th
+ disp(Th) 
+end
 
-%%% Animate result %%%
-disp('Animating...');
-animate(t,z,walker,steps,fps);
+% %%% Animate result %%%
+% disp('Animating...');
+% animate(t,z,walker,steps,fps);
 
 
 end
@@ -351,137 +346,137 @@ for i=1:n
     J(:,i)=(feval(FUN,ztemp1,walker)-feval(FUN,ztemp2,walker)) ; %それぞれonestepで計算させてその差分についてのヤコビアンを導出。
 end
 J=J/(2*pert); %次元合わせ。
-
-%===================================================================
-function animate(t_all,z_all,walker,steps,fps)
-%===================================================================
-
-%%%% Interpolate linearly using fps %%%%%
-z_all_plot = [z_all(:,1) z_all(:,3) z_all(:,6) z_all(:,8)];
-nn = size(z_all_plot,2);
-total_frames = round(t_all(end)*fps);
-t = linspace(0,t_all(end),total_frames);
-z = zeros(total_frames,nn);
-for i=1:nn
-    z(:,i) = interp1(t_all,z_all_plot(:,i),t);
-end
-
-%%%% Now animate the results %%%%%%%
-clf
-
-M = walker.M;  m = walker.m; I = walker.I;   
-l = walker.l;  c = walker.c; w = walker.w;   
-r = walker.r;  g = walker.g; gam = walker.gam; 
-
-mm = size(z,1);
-
-min_xh = min(z(:,3)); max_xh = max(z(:,3)); 
-dist_travelled = max_xh - min_xh;
-camera_rate = dist_travelled/mm;
-
-window_xmin = -1*l; window_xmax = 1*l;
-window_ymin = -0.1; window_ymax = 1.1*(l+r);
-
-axis('equal')
-axis([window_xmin window_xmax window_ymin window_ymax])
-axis off
-set(gcf,'Color',[1,1,1])
-
-%%%%%%
-lines_for_feet = 4; %no of straight lines to represent a foot.
-counter = 2 + 2*lines_for_feet; % total number of segments needed for animation. 2 legs and other for feet
-th = 0.25; %%%% angle subtended by each straight line segment of foot
-
-%%% creat object for hinge %%%%%
-hingepic=line('xdata',0,'ydata',0, 'marker','.','markersize',[20], ...
-          'erase','xor','color','black');
-
-   
-%%%% create object for legs and feet %%%%
-barref = [0 0; 0 -1]; %%% bar along negative y-axis
-y = [0;-1]; %%% vector along negative y
-O = [0; 0]; %%%% origin
-
-%%%% legs in red %%%      
-for p = 1:2
-    barpic(p)=line('xdata',barref(1,:),'ydata',barref(2,:),'linewidth', 2, 'erase','xor','color','red');
-end
-
-%%% feet in blue %%%
-for p = 3:counter
-    barpic(p)=line('xdata',barref(1,:),'ydata',barref(2,:),'linewidth', 2, 'erase','xor','color','blue');
-end
-
-%%%% create ramp %%%%
-rampref=[min_xh-1 max_xh+l ; 0 0];
-
-%%%% Draw ramp %%%%%%%%%%
-line('xdata',rampref(1,:),'ydata',rampref(2,:), ...
-            'linewidth', 1,'color','black');
-     
-
-moviescaling = 1;                      % slow down factor
-delay =floor(moviescaling); %delay per frame in .001 secs
-
-
-for i=1:mm
-    
-%%%% Put some delay if needed %%%%%%%%%%   
-%    for j=1:100, log(1:delay*17); end %delay for graphics. 
-% 	                                 %the number in this expression
-% 									 %is machine dependent.
-% 									 %The LOG is just something
-% 									 %to keep the machine busy.
-
-   q1 = z(i,1); q2 = z(i,2); 
-   xh = z(i,3); yh = z(i,4);  
-
-   window_xmin = window_xmin + camera_rate;
-   window_xmax = window_xmax + camera_rate;
-   axis('equal')
-   axis([window_xmin window_xmax window_ymin window_ymax])
-
-   %%% hinge coordinates
-   hinge=[xh; yh];   
-   
-   %%% leg coordinates
-        A = [q1 -(q2-q1)];
-
-        
-        for p = 1:2
-            bar(:,:,p) = [hinge, hinge] + (l+r)*R(A(p))*barref;
-            center(:,:,p) = hinge + l*R(A(p))*y; %%% center of each circle on foot 
-        end
-        
-  %%%% feet coordinates
-        
-        %%% angle subtended by arc at the center %%%
-        %%% This is for lines_for_feet = 4 and need changes if more lines
-        %%% are needed to represent a foot. Size of this matrix is lines_for_feet*2
-            B = [-th -2*th; 0 -th; th 0; 2*th th];
-    
-        incr = 3;
-        for p=1:2
-            for q=1:4
-                   C = A(p) + B(q,:);
-                   bar(:,:,incr) = [center(:,:,p), center(:,:,p)] + r*R(C(1))*[O,y] + r*R(C(2))*[y, O]; 
-                   incr = incr + 1;
-            end
-        end
-               
-    %%% animate now    
-    set(hingepic,'xdata',hinge(1),'ydata',hinge(2));
-
-    for p=1:counter
-        set(barpic(p),'xdata',bar(1,:,p),'ydata',bar(2,:,p));
-    end
-    
-    drawnow  
-  
-end
-
-%===================================================================
-function rotation = R(A)
-%===================================================================
-rotation = [cos(A) -sin(A); sin(A) cos(A)];
-
+% 
+% %===================================================================
+% function animate(t_all,z_all,walker,steps,fps)
+% %===================================================================
+% 
+% %%%% Interpolate linearly using fps %%%%%
+% z_all_plot = [z_all(:,1) z_all(:,3) z_all(:,6) z_all(:,8)];
+% nn = size(z_all_plot,2);
+% total_frames = round(t_all(end)*fps);
+% t = linspace(0,t_all(end),total_frames);
+% z = zeros(total_frames,nn);
+% for i=1:nn
+%     z(:,i) = interp1(t_all,z_all_plot(:,i),t);
+% end
+% 
+% %%%% Now animate the results %%%%%%%
+% clf
+% 
+% M = walker.M;  m = walker.m; I = walker.I;   
+% l = walker.l;  c = walker.c; w = walker.w;   
+% r = walker.r;  g = walker.g; gam = walker.gam; 
+% 
+% mm = size(z,1);
+% 
+% min_xh = min(z(:,3)); max_xh = max(z(:,3)); 
+% dist_travelled = max_xh - min_xh;
+% camera_rate = dist_travelled/mm;
+% 
+% window_xmin = -1*l; window_xmax = 1*l;
+% window_ymin = -0.1; window_ymax = 1.1*(l+r);
+% 
+% axis('equal')
+% axis([window_xmin window_xmax window_ymin window_ymax])
+% axis off
+% set(gcf,'Color',[1,1,1])
+% 
+% %%%%%%
+% lines_for_feet = 4; %no of straight lines to represent a foot.
+% counter = 2 + 2*lines_for_feet; % total number of segments needed for animation. 2 legs and other for feet
+% th = 0.25; %%%% angle subtended by each straight line segment of foot
+% 
+% %%% creat object for hinge %%%%%
+% hingepic=line('xdata',0,'ydata',0, 'marker','.','markersize',[20], ...
+%           'erase','xor','color','black');
+% 
+%    
+% %%%% create object for legs and feet %%%%
+% barref = [0 0; 0 -1]; %%% bar along negative y-axis
+% y = [0;-1]; %%% vector along negative y
+% O = [0; 0]; %%%% origin
+% 
+% %%%% legs in red %%%      
+% for p = 1:2
+%     barpic(p)=line('xdata',barref(1,:),'ydata',barref(2,:),'linewidth', 2, 'erase','xor','color','red');
+% end
+% 
+% %%% feet in blue %%%
+% for p = 3:counter
+%     barpic(p)=line('xdata',barref(1,:),'ydata',barref(2,:),'linewidth', 2, 'erase','xor','color','blue');
+% end
+% 
+% %%%% create ramp %%%%
+% rampref=[min_xh-1 max_xh+l ; 0 0];
+% 
+% %%%% Draw ramp %%%%%%%%%%
+% line('xdata',rampref(1,:),'ydata',rampref(2,:), ...
+%             'linewidth', 1,'color','black');
+%      
+% 
+% moviescaling = 1;                      % slow down factor
+% delay =floor(moviescaling); %delay per frame in .001 secs
+% 
+% 
+% for i=1:mm
+%     
+% %%%% Put some delay if needed %%%%%%%%%%   
+% %    for j=1:100, log(1:delay*17); end %delay for graphics. 
+% % 	                                 %the number in this expression
+% % 									 %is machine dependent.
+% % 									 %The LOG is just something
+% % 									 %to keep the machine busy.
+% 
+%    q1 = z(i,1); q2 = z(i,2); 
+%    xh = z(i,3); yh = z(i,4);  
+% 
+%    window_xmin = window_xmin + camera_rate;
+%    window_xmax = window_xmax + camera_rate;
+%    axis('equal')
+%    axis([window_xmin window_xmax window_ymin window_ymax])
+% 
+%    %%% hinge coordinates
+%    hinge=[xh; yh];   
+%    
+%    %%% leg coordinates
+%         A = [q1 -(q2-q1)];
+% 
+%         
+%         for p = 1:2
+%             bar(:,:,p) = [hinge, hinge] + (l+r)*R(A(p))*barref;
+%             center(:,:,p) = hinge + l*R(A(p))*y; %%% center of each circle on foot 
+%         end
+%         
+%   %%%% feet coordinates
+%         
+%         %%% angle subtended by arc at the center %%%
+%         %%% This is for lines_for_feet = 4 and need changes if more lines
+%         %%% are needed to represent a foot. Size of this matrix is lines_for_feet*2
+%             B = [-th -2*th; 0 -th; th 0; 2*th th];
+%     
+%         incr = 3;
+%         for p=1:2
+%             for q=1:4
+%                    C = A(p) + B(q,:);
+%                    bar(:,:,incr) = [center(:,:,p), center(:,:,p)] + r*R(C(1))*[O,y] + r*R(C(2))*[y, O]; 
+%                    incr = incr + 1;
+%             end
+%         end
+%                
+%     %%% animate now    
+%     set(hingepic,'xdata',hinge(1),'ydata',hinge(2));
+% 
+%     for p=1:counter
+%         set(barpic(p),'xdata',bar(1,:,p),'ydata',bar(2,:,p));
+%     end
+%     
+%     drawnow  
+%   
+% end
+% 
+% %===================================================================
+% function rotation = R(A)
+% %===================================================================
+% rotation = [cos(A) -sin(A); sin(A) cos(A)];
+% 

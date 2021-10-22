@@ -20,7 +20,7 @@ if nargin == 0
 end
 %for i=1:101
 for i=1:1
-gamma = 0.14 + 0.001*(i-1);
+%gamma = 0.14 + 0.001*(i-1);
 gamma = 0.187;
 disp(gamma);
 try
@@ -61,7 +61,7 @@ else
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%
-steps = 10; %number of steps to animate
+steps = 20; %number of steps to animate
 fps = 10; %Use low frames per second for low gravity
 
 
