@@ -8,51 +8,52 @@
 % Last updated: 26 December 2009
 
 
-function passivewalker_unsimple(flag)  
+function passivewalker(flag)  
 
 clc
 clear all
 close all
 format long
-warning off
 
 if nargin == 0
     flag = 1; %simulates simplest walker by default
 end
-
+%for i=1:101
+for i=1:1
+gamma = 0.14 + 0.001*(i-1);
+gamma = 0.187;
+disp(gamma);
+try
 if flag == 1
-%     %% Garcia's simplest walker with roots for Validation
-%     %%% Dimensions %%
-%     %% c = COM on the leg from hip, w = COM fore-aft offset, r = radius of feet
-%     %% M = hip mass, m = leg mass, I = leg inertia, l = leg length
-%     %%%%% To get results close to Garcia's walker increase M %%%%%%
-%     walker.M = 1000; walker.m = 1.0; walker.I = 0.00; walker.l = 1.0; walker.w = 0.0; 
-%     walker.c = 1.0;  walker.r = 0.0; walker.g = 1.0; walker.gam = 0.009; 
-%     
-% 
-%     %%%% Initial State %%%%%
-%     q1 = 0.2; u1 = -0.2;
-%     q2 = 0.4; u2 = -0.3;
-% 
-%     z0 = [q1 u1 q2 u2];
-%     %%% Root finding will give this stable root 
-%     %zstar = [0.200161072169750  -0.199906060087682   0.400322144339512  -0.015805473227965];
+    %% Garcia's simplest walker with roots for Validation
+    %%% Dimensions %%
+    %% c = COM on the leg from hip, w = COM fore-aft offset, r = radius of feet
+    %% M = hip mass, m = leg mass, I = leg inertia, l = leg length
+    %%%%% To get results close to Garcia's walker increase M %%%%%%
+    walker.M = 56.0; walker.m = 12.0; walker.I = 0.78; walker.l = 0.84; walker.w = 0.0; 
+    walker.c = 0.425;  walker.r = 0.1; walker.g = 9.8; walker.gam = gamma; 
+    
 
-% else 
-%    
+    %%%% Initial State %%%%%
+    q1 = 0.2; u1 = -0.2;
+    q2 = 0.4; u2 = -0.3;
 
- %%  More General round feet walker with roots
+    z0 = [q1 u1 q2 u2];
+    %%% Root finding will give this stable root 
+    %zstar = [0.200161072169750  -0.199906060087682   0.400322144339512  -0.015805473227965];
+
+else 
+    %%  More General round feet walker with roots
     %%%% Dimensions %%
     %% c = COM on the leg from hip, w = COM fore-aft offset, r = radius of feet
     %% M = hip mass, m = leg mass, I = leg inertia, l = leg length
-walker.M = 56 ; walker.m = 12; walker.I = .78 ; walker.l = .84; walker.w = 0.0; 
-walker.c = 0.42 ; walker.r = 0.1; walker.g = 9.8;  walker.gam = 0.15;
-    
+    walker.M = 1.0; walker.m = 0.5; walker.I = 0.02; walker.l = 1.0; walker.w = 0.0; 
+    walker.c = 0.5; walker.r = 0.1; walker.g = 9.8; walker.gam = 0.13; %% 0.10 0.11 0.12
     
     %%%% Initial State %%%%%
-    q1 = 0.35; u1 = -2.8;
-    q2 =  2*q1; % φ　　 最初の股角度
-    u2 =  -1*u1*(1-cos(q2)); % φdot 最初の股角速度
+    q1 = 0.2; u1 = -0.3;
+    q2 = 0.4; u2 = -0.3;
+    
     z0 = [q1 u1 q2 u2];
     %% Root finding will give this stable root 
     %zstar = [0.189472782205104  -0.239124222551699   0.378945564410209  -0.053691703909393];
@@ -60,7 +61,7 @@ walker.c = 0.42 ; walker.r = 0.1; walker.g = 9.8;  walker.gam = 0.15;
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%
-steps = 20; %number of steps to animate
+steps = 10; %number of steps to animate
 fps = 10; %Use low frames per second for low gravity
 
 
@@ -80,19 +81,12 @@ J=partialder(@onestep,zstar,walker);
 disp('EigenValues for linearized map are');
 eig(J)
  
-
 %%%% Get data for all the steps %%%
 [z,t] = onestep(zstar,walker,steps);
-% %%%
-l  = .84;   %[m]
-g = 9.8;  %[1N]length = l;
-coeff = sqrt(l/g);
-onestep_parameter = cat(2,coeff*t,z);
-%%%
-save onestep_parameter.mat onestep_parameter
-
-
-
+for i=1:size(t)
+fprintf("%.20f %.20f %.20f %.20f %.20f \n",t(i),z(i,1),z(i,2),z(i,3),z(i,4));
+end
+fprintf("\n");
 %%% Animate result %%%
 disp('Animating...');
 animate(t,z,walker,steps,fps);
@@ -103,7 +97,10 @@ plot(t,z(:,1),'r',t,z(:,3),'b')
 xlabel('time'); ylabel('Angle (rad)');
 legend('Stance Angle','Swing Angle');
 title('State variables vs time for passive walker');
-
+catch
+    continue;
+end
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%% FUNCTIONS START HERE %%%%%%%%
@@ -171,53 +168,32 @@ u2 = z0(4);
 z0 = [q1 u1 q2 u2 TE xh vxh yh vyh];
 
 t0 = 0; 
-dt = 5; %might need to be changed based on time taken for one step %msec?
+dt = 5; %might need to be changed based on time taken for one step
 time_stamps = 100;
 t_ode = t0;
 z_ode = z0;
-    options=odeset('abstol',1e-13,'reltol',1e-13,'events',@collision);
-    %@collision関数で設定された条件（event）で計算停止を指示。
-    tspan = linspace(t0,t0+dt,time_stamps); %ここで作っているのが「ｔ」です！
-    %y = linspace(x1,x2,n) は、x1 ～ x2 の間の等間隔の点を n 個含む行ベクトルを返します。
-    [t_temp, z_temp] = ode113(@single_stance,tspan,z0,options,walker);
-    % ode113⇒初期値を方程式に適用し、tspanの範囲で積分している
-    % [t,y] = ode113(odefun,tspan,y0) は、tspan = [t0 tf] のときに、
-    % 初期条件 y0 を使用して、微分方程式系 y′=f(t,y) を t0 から tf まで積分します。
-    % 解の配列 y の各行は、列ベクトル t に返される値に対応します。
-    % すなわち時間t(t_temp)と、積分値y(z_temp)を出力する
+
 for i=1:steps
     options=odeset('abstol',1e-13,'reltol',1e-13,'events',@collision);
-    tspan = linspace(t0,t0+dt,time_stamps); % 5/100になってます。t0からdtまで（0-5）を100に分けろや。という意味。
+    tspan = linspace(t0,t0+dt,time_stamps);
     [t_temp, z_temp] = ode113(@single_stance,tspan,z0,options,walker);
-    % シングルスタンス2回分で1ストライドで、シングルスタンス一回につき0
     
     zplus=heelstrike(t_temp(end),z_temp(end,:),walker); 
-    % 次の一歩目のθ+とかを計算する。コリジョンルールーを使って。
-    % ヒールストライクに積分値の最終値を代入して、θ+、θdot+など（z_plus）を計算する
-    % その値が次の初期値（「z0」）になる。10行くらい下で。
-    % この行列は一行しかない。
     
-    
-    t_step =t_temp(end); % time
-    d_step = 2*(l+r)*sin(q1);
-    v_step = d_step/t_step;
-        
-     z0 = zplus; %heelstrikeで計算されたθ+とかが次の計算のための初期値になる
-     t0 = t_temp(end); %時間については
+    z0 = zplus;
+    t0 = t_temp(end);
     
     %%%%% Ignore time stamps for heelstrike and first integration point
-    t_ode = [t_ode; t_temp(2:end)];  %一行目は消して、一歩分のデータをt_odeに縦向きに連結していく
-    z_ode = [z_ode; z_temp(2:end,:)]; %ここでため込まれた積分値が、z, tとなって最終的に終了する10行下で。
+    t_ode = [t_ode; t_temp(2:end)];
+    z_ode = [z_ode; z_temp(2:end,:)];
     
 end
 
-
-z = zplus(1:4); %[q1 u1 q2 u2]です。　次のz0です。なので、以下でz_odeに変数変換され、次回のループで
-                        % t_ode = t0;　z_ode = z0;　という風に呼び出されて計算初期値として使われます。
+z = zplus(1:4);
 
 if flag==1
-    z=z_ode;
-    t=t_ode;
+   z=z_ode;
+   t=t_ode;
 end
 
 %===================================================================
@@ -233,18 +209,7 @@ M = walker.M;  m = walker.m; I = walker.I;
 l = walker.l;  c = walker.c; w = walker.w;   
 r = walker.r;  g = walker.g; gam = walker.gam;
 
-
-% if t > t(length(t)/2)
-% Th=0.1;   %external hip torque, if needed               
-% else
-% Th = 0;    
-% end
-
-if q1<0
-    Th = 0.20333;
-else
-    Th = 0;
-end
+Th=0;   %external hip torque, if needed               
 
 M11 = -2*w^2*m-2*I+2*m*l*c*cos(q2)+2*m*w*l*sin(q2)-2*m*c^2-2*m*l^2-M*l^2+2*m*l*c-2*m*r^2-M*r^2+2*m*r*c*cos(q1-q2)-2*m*r*w*sin(q1-q2)-2*M*r*l*cos(q1)-4*m*r*l*cos(q1)+2*m*r*c*cos(q1)-2*m*r*w*sin(q1); 
 M12 = w^2*m+I-m*l*c*cos(q2)-m*w*l*sin(q2)+m*c^2-m*r*c*cos(q1-q2)+m*r*w*sin(q1-q2); 
@@ -298,7 +263,6 @@ r1 = z(1);   v1 = z(2);
 r2 = z(3);   v2 = z(4);                         
 xh = z(6);   yh = z(8);                       
 
-% 初期値という意味合いは無く、計算式の都合上q1とかq2を使っている？
 q1 = r1 - r2;                         
 q2 = -r2;                                       
 
@@ -329,7 +293,6 @@ TE = 1/2*m*(((-l*cos(q1)-r)*u1-u1*(-c*cos(q1)+w*sin(q1)))^2+(-l*sin(q1)*u1+u1*(c
 vxh = (-l*cos(q1)-r)*u1; 
 vyh = -l*sin(q1)*u1; 
 
-%次の一歩のための初期値を出力
 zplus = [q1 u1 q2 u2 TE xh vxh yh vyh];                     
 
 
