@@ -9,18 +9,24 @@
 
 
 function passivewalker(flag)  
+
 warning off
-clc
 clear all
 close all
 format long
 
+try rmdir MotionDataResults_ramda s;% フォルダが無くてもsustainさせるため
+catch 
+end
+mkdir MotionDataResults_ramda;
+
+
 if nargin == 0
     flag = 1; %simulates simplest walker by default
 end
-for i=1:501
+for i=1:5001
 %for i=1:1
-gamma = 0.005 + 0.001*(i-1);
+gamma = 0.001 + 0.0001*(i-1);
 %gamma = 0.233;
 disp(gamma);
 try
@@ -81,13 +87,16 @@ J=partialder(@onestep,zstar,walker);
 % disp('EigenValues for linearized map are');
 eig(J);
 ramda = eig(J);
-ramda_abs_max = max(abs(real(ramda)));
+ramda_abs_max = max(abs(real(ramda)))
 if ramda_abs_max <1
 %%%% Get data for all the steps %%%
+csv_filename = filenamer(z0,gamma);
 [z,t] = onestep(zstar,walker,steps);
-for i=1:size(t)
-fprintf("%.20f %.20f %.20f %.20f %.20f \n",t(i),z(i,1),z(i,2),z(i,3),z(i,4));
-end
+out = ('MotionDataResults_ramda');
+csvwrite(fullfile(out,csv_filename),onestep_parameter);  
+% for i=1:size(t)
+% fprintf("%.20f %.20f %.20f %.20f %.20f \n",t(i),z(i,1),z(i,2),z(i,3),z(i,4));
+% end
 fprintf("\n");
 % %%% Animate result %%%
 % disp('Animating...');
@@ -108,6 +117,16 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%% FUNCTIONS START HERE %%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%===================================================================
+% データ保存用csvのファイル名を決定
+function csv_filename = filenamer(z0,gamth)
+    str_q1 = num2str(z0(1));
+    str_u1 = num2str(z0(2));
+    str_gam = num2str(gamma);
+    csv_filename = append('onestep_parameter_',str_q1,'_',str_u1,'_',str_gam,'.csv');
+%===================================================================
+
 
 %===================================================================
 function zdiff=fixedpt(z0,walker)
@@ -212,7 +231,12 @@ M = walker.M;  m = walker.m; I = walker.I;
 l = walker.l;  c = walker.c; w = walker.w;   
 r = walker.r;  g = walker.g; gam = walker.gam;
 
-Th=0;   %external hip torque, if needed               
+% External hip torque = th.
+if q1<0
+    Th = 0.5;
+else
+    Th = 0;
+end
 
 M11 = -2*w^2*m-2*I+2*m*l*c*cos(q2)+2*m*w*l*sin(q2)-2*m*c^2-2*m*l^2-M*l^2+2*m*l*c-2*m*r^2-M*r^2+2*m*r*c*cos(q1-q2)-2*m*r*w*sin(q1-q2)-2*M*r*l*cos(q1)-4*m*r*l*cos(q1)+2*m*r*c*cos(q1)-2*m*r*w*sin(q1); 
 M12 = w^2*m+I-m*l*c*cos(q2)-m*w*l*sin(q2)+m*c^2-m*r*c*cos(q1-q2)+m*r*w*sin(q1-q2); 

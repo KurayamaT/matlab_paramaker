@@ -82,7 +82,7 @@ disp(ramda_abs_max)
 %%%% Get data of leg motion. %%%
   csv_filename = filenamer(z0,gamth);
   [z,t,Th] = onestep(zstar,gamth,steps);
-
+  onestep_parameter = z;
   out = ('MotionDataResults_tau');
   csvwrite(fullfile(out,csv_filename),onestep_parameter);  
   
