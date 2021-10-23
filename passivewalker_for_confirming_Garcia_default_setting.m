@@ -1,24 +1,29 @@
-% PASSIVEWALKER simulates passive ramp walkers.
-% passivewalker(1) - simplest walker as a limiting case of a passive walker (Garcia et. al 1998)
-% passivewalker(2) - more general passive walker with round feet.
-% 
-% Needs ODE113, FSOLVE, INTERP1. 
-% If you find bugs in this code please mail, 
-% Pranav A. Bhounsule, pab47@cornell.edu
-% Last updated: 26 December 2009
+%Garciaの初期設定でgammaだけを変化させ論文でいうところのγ＝0.015までしかlimitcycleが存在しないことを確かめるためのプログラム
 
 
 function passivewalker(flag)  
 
-clc
+warning off
 clear all
 close all
 format long
 
+try rmdir MotionDataResults_ramda s;% フォルダが無くてもsustainさせるため
+catch 
+end
+mkdir MotionDataResults_ramda;
+
+
 if nargin == 0
     flag = 1; %simulates simplest walker by default
 end
-
+for i=1:5001
+%for i=1:1
+gamma = 0.001 + 0.0005*(i-1);
+%gamma = 0.236;
+disp gamma
+disp(gamma);
+try
 if flag == 1
     %% Garcia's simplest walker with roots for Validation
     %%% Dimensions %%
@@ -26,9 +31,8 @@ if flag == 1
     %% M = hip mass, m = leg mass, I = leg inertia, l = leg length
     %%%%% To get results close to Garcia's walker increase M %%%%%%
     walker.M = 1000; walker.m = 1.0; walker.I = 0.00; walker.l = 1.0; walker.w = 0.0; 
-    walker.c = 1.0;  walker.r = 0.2; walker.g = 1.0; walker.gam = 0.012; 
+    walker.c = 1.0;  walker.r = 0.0; walker.g = 1.0; walker.gam = gamma; 
     
-
     %%%% Initial State %%%%%
     q1 = 0.2; u1 = -0.2;
     q2 = 0.4; u2 = -0.3;
@@ -42,8 +46,7 @@ else
     %%%% Dimensions %%
     %% c = COM on the leg from hip, w = COM fore-aft offset, r = radius of feet
     %% M = hip mass, m = leg mass, I = leg inertia, l = leg length
-    walker.M = 1.0; walker.m = 0.5; walker.I = 0.02; walker.l = 1.0; walker.w = 0.0; 
-    walker.c = 0.5; walker.r = 0.2; walker.g = 1.0; walker.gam = 0.01; 
+ 
     
     %%%% Initial State %%%%%
     q1 = 0.2; u1 = -0.3;
@@ -56,7 +59,7 @@ else
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%
-steps = 10; %number of steps to animate
+steps = 20; %number of steps to animate
 fps = 10; %Use low frames per second for low gravity
 
 
@@ -73,27 +76,62 @@ end
 
 %%% Stability, using eigenvalues of Poincare map %%%
 J=partialder(@onestep,zstar,walker);
-disp('EigenValues for linearized map are');
-eig(J)
- 
+% disp('EigenValues for linearized map are');
+eig(J);
+ramda = eig(J);
+ramda_abs_max = max(abs(real(ramda)));
+if ramda_abs_max <1
+disp('Limitcycle is stable.')
+disp('Motion data will be exported as a CSV file.')
+disp('ramda max value is below↓')
+disp(ramda_abs_max)
+
 %%%% Get data for all the steps %%%
+% データ保存用csvのファイル名を決定
+    str_q1 = num2str(z0(1));
+    str_u1 = num2str(z0(2));
+    str_gam = num2str(gamma);
+    csv_filename = append('onestep_parameter_',str_q1,'_',str_u1,'_',str_gam,'.csv');
 [z,t] = onestep(zstar,walker,steps);
+onestep_parameter = z;
+out = ('MotionDataResults_ramda');
+csvwrite(fullfile(out,csv_filename),onestep_parameter);  
+end
 
-%%% Animate result %%%
-disp('Animating...');
-animate(t,z,walker,steps,fps);
+% for i=1:size(t)
+% fprintf("%.20f %.20f %.20f %.20f %.20f \n",t(i),z(i,1),z(i,2),z(i,3),z(i,4));
+% end
+% fprintf("\n");
 
-%%% Plot data %%%
-disp('Some plots...')
-plot(t,z(:,1),'r',t,z(:,3),'b')
-xlabel('time'); ylabel('Angle (rad)');
-legend('Stance Angle','Swing Angle');
-title('State variables vs time for passive walker');
+% %%% Animate result %%%
+% disp('Animating...');
+% animate(t,z,walker,steps,fps);
 
+% %%% Plot data %%%
+% disp('Some plots...')
+% plot(t,z(:,1),'r',t,z(:,3),'b')
+% xlabel('time'); ylabel('Angle (rad)');
+% legend('Stance Angle','Swing Angle');
+% title('State variables vs time for passive walker');
+%end
+catch
+    continue;
+end
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%% FUNCTIONS START HERE %%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%===================================================================
+% データ保存用csvのファイル名を決定
+function csv_filename = filenamer(z0,~)
+    str_q1 = num2str(z0(1));
+    str_u1 = num2str(z0(2));
+    str_gam = num2str(gamma);
+    csv_filename = append('onestep_parameter_',str_q1,'_',str_u1,'_',str_gam,'.csv');
+%===================================================================
+
 
 %===================================================================
 function zdiff=fixedpt(z0,walker)

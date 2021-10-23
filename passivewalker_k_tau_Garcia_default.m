@@ -27,15 +27,15 @@
 % for seeking convenient value of tau.
 % paramaker_k_tau(.4,.6,2,-.5,-.4,2,.1,.3,2,.1,.5,4)
 
-function passivewalker_k_tau(q,u,gamma,tau)
+function passivewalker_k_tau_Garcia_default(q,u,gamma,tau)
 
 tic
     
 % motionデータ保存用のフォルダ確保
-try rmdir MotionDataResults_tau_setteled_parameter800to900 s;% フォルダが無くてもsustainさせるため
+try rmdir MotionDataResults_tau_but_Garcia_default s;% フォルダが無くてもsustainさせるため
 catch 
 end
-mkdir MotionDataResults_tau_setteled_parameter800to900;
+mkdir MotionDataResults_tau_but_Garcia_default;
 
 parfor k = 1:length(gamma)
     for m = 1:length(tau)
@@ -90,7 +90,7 @@ disp(ramda_abs_max)
   csv_filename = filenamer(z0,gamth);
   [z,t,Th] = onestep(zstar,gamth,steps);
   onestep_parameter = [t,z];
-  out = ('MotionDataResults_tau_setteled_parameter800to900');
+  out = ('MotionDataResults_tau_but_Garcia_default');
   csvwrite(fullfile(out,csv_filename),onestep_parameter);  
   
  
@@ -194,14 +194,14 @@ q1 = z(1);   u1 = z(2);
 q2 = z(3);   u2 = z(4);                         
 gam = gamth(1); th = gamth(2);
 
-M = 56; %[kg]
-m = 12; %[kg]
-I =  .78; %[kg・m^2]
-l  = .84;   %[m]
+M = 1000; %[kg]
+m = 1; %[kg]
+I =  0; %[kg・m^2]
+l  = 1;   %[m]
 w = 0; %[m]
-c = .42;  %[m]
-r = .1;  %[m]
-g = 9.8;  %[1N]
+c = 1;  %[m]
+r = 0;  %[m]
+g = 1;  %[1N]
     
 % 運動方程式の定義：I=w＝r=0、c=l（※l-aにてa＝0：池俣fig4.1）、で式を整理すると、池俣p20の、M11と完全に一致する！！！→20210809確認
 % M11 = -1*(-2*w^2*m-2*I+2*m*l*c*cos(q2)+2*m*w*l*sin(q2)-2*m*c^2-2*m*l^2-M*l^2+2*m*l*c-2*m*r^2-M*r^2+2*m*r*c*cos(q1-q2)-2*m*r*w*sin(q1-q2)-2*M*r*l*cos(q1)-4*m*r*l*cos(q1)+2*m*r*c*cos(q1)-2*m*r*w*sin(q1)); 
@@ -215,11 +215,13 @@ M22 = -1*(m*c^2+I);
 
 
 % External hip torque = th.
-if q1<0
-    Th = th;
-else
-    Th = 0;
-end
+% if q1<0
+%     Th = th;
+% else
+%     Th = 0;
+% end
+
+Th=0;
 
 % 以下は同じく池俣式のHとGに該当する
 % RHS1 = -2*m*r*u1*u2*c*sin(q1-q2)-2*m*r*u1*u2*w*cos(q1-q2)+m*r*u1^2*w*cos(q1)+m*r*u1^2*c*sin(q1)-2*m*r*l*sin(q1)*u1^2+M*g*sin(gam)*r+2*m*g*sin(gam)*r+m*r*u2^2*w*cos(q1-q2)+m*r*u2^2*c*sin(q1-q2)+m*r*u1^2*w*cos(q1-q2)+m*r*u1^2*c*sin(q1-q2)-M*r*l*sin(q1)*u1^2+M*g*l*sin(gam-q1)+2*m*g*l*sin(gam-q1)-m*g*c*sin(gam-q1)+m*g*w*cos(gam-q1)-m*g*c*sin(gam-q1+q2)+m*g*w*cos(gam-q1+q2)-2*m*l*u1*u2*w*cos(q2)-m*l*u2^2*c*sin(q2)+2*m*l*u1*u2*c*sin(q2)+m*l*u2^2*w*cos(q2); 
@@ -261,14 +263,14 @@ r2 = z(3);   v2 = z(4);
 q1 = r1 - r2;                         
 q2 = -r2;                                       
 
-M = 56; %[kg]
-m = 12; %[kg]
-I =  .78; %[kg・m^2]
-l  = .84;   %[m]
+M = 1000; %[kg]
+m = 1; %[kg]
+I =  0; %[kg・m^2]
+l  = 1;   %[m]
 w = 0; %[m]
-c = .42;  %[m]
-r = .1;  %[m]
-g = 9.8;  %[1N]
+c = 1;  %[m]
+r = 0;  %[m]
+g = 1;  %[1N]
     
 % M11 = 2*m*l^2-2*m*l*c+2*m*c^2+2*m*w^2+2*m*r^2+4*m*r*l*cos(q1)-2*m*r*c*cos(q1)+2*m*w*sin(q1)*r-2*m*l*c*cos(q2)-2*m*l*w*sin(q2)-2*m*r*c*cos(q1-q2)+2*m*sin(q1-q2)*w*r+M*l^2+2*M*r*l*cos(q1)+M*r^2+2*I; 
 % M12 = m*l*c*cos(q2)+m*l*w*sin(q2)-m*c^2-m*w^2+m*r*c*cos(q1-q2)-m*sin(q1-q2)*w*r-I; 
@@ -357,9 +359,14 @@ J=J/(2*pert); %次元合わせ。
 % %%%% Now animate the results %%%%%%%
 % clf
 % 
-% M = walker.M;  m = walker.m; I = walker.I;   
-% l = walker.l;  c = walker.c; w = walker.w;   
-% r = walker.r;  g = walker.g; gam = walker.gam; 
+% M = 1000; %[kg]
+%m = 1; %[kg]
+% I =  0; %[kg・m^2]
+% l  = 1;   %[m]
+% w = 0; %[m]
+% c = 1;  %[m]
+% r = 0;  %[m]
+% g = 1;  %[1N]
 % 
 % mm = size(z,1);
 % 
