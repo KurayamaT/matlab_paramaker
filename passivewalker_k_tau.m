@@ -71,6 +71,9 @@ else
 J=partialder(@onestep,zstar,gamth);
 ramda = eig(J);
 ramda_abs_max = max(abs(ramda))
+max_koyuchi = num2str(ramda_abs_max);
+koyuchi=append('固有値=>', max_koyuchi,'_at_γ=',num2str(gam));
+disp(koyuchi);
 
 if ramda_abs_max < 1
 disp(str_zstar2);
@@ -82,17 +85,11 @@ disp(ramda_abs_max)
 %%%% Get data of leg motion. %%%
   csv_filename = filenamer(z0,gamth);
   [z,t,Th] = onestep(zstar,gamth,steps);
-  onestep_parameter = z;
-  out = ('MotionDataResults_tau');
+  onestep_parameter = [t,z];
+  out = ('MotionDataResults_tau_setteled_parameter');
   csvwrite(fullfile(out,csv_filename),onestep_parameter);  
   
- jikann = onestep_parameter(end,1);
- michinori = 2*sin(onestep_parameter(1,2));
- sokudo = michinori/jikann;
- disp sokudo
- disp(sokudo)
- disp Th
- disp(Th) 
+ 
 end
 
 % %%% Animate result %%%

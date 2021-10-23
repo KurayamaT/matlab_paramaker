@@ -1,13 +1,3 @@
-% PASSIVEWALKER simulates passive ramp walkers.
-% passivewalker(1) - simplest walker as a limiting case of a passive walker (Garcia et. al 1998)
-% passivewalker(2) - more general passive walker with round feet.
-% 
-% Needs ODE113, FSOLVE, INTERP1. 
-% If you find bugs in this code please mail, 
-% Pranav A. Bhounsule, pab47@cornell.edu
-% Last updated: 26 December 2009
-
-
 function passivewalker(flag)  
 
 warning off
@@ -24,11 +14,12 @@ mkdir MotionDataResults_ramda;
 if nargin == 0
     flag = 1; %simulates simplest walker by default
 end
-parfor i=1:5001
+for i=1:5001
 %for i=1:1
-gamma = 0.10 + 0.0001*(i-1);
-%gamma = 0.233;
-% disp(gamma);
+gamma = 0.001 + 0.0005*(i-1);
+%gamma = 0.236;
+disp gamma
+disp(gamma);
 try
 if flag == 1
     %% Garcia's simplest walker with roots for Validation
@@ -36,10 +27,9 @@ if flag == 1
     %% c = COM on the leg from hip, w = COM fore-aft offset, r = radius of feet
     %% M = hip mass, m = leg mass, I = leg inertia, l = leg length
     %%%%% To get results close to Garcia's walker increase M %%%%%%
-    M = 56.0; m = 12.0; I = 0.78; l = 0.84; w = 0.0; 
-    c = 0.425;  r = 0.1; g = 9.8; 
+    walker.M = 1000; walker.m = 1.0; walker.I = 0.00; walker.l = 1.0; walker.w = 0.0; 
+    walker.c = 1.0;  walker.r = 0.0; walker.g = 1.0; walker.gam = gamma; 
     
-
     %%%% Initial State %%%%%
     q1 = 0.2; u1 = -0.2;
     q2 = 0.4; u2 = -0.3;
@@ -52,15 +42,14 @@ else
     %%  More General round feet walker with roots
     %%%% Dimensions %%
     %% c = COM on the leg from hip, w = COM fore-aft offset, r = radius of feet
-%     %% M = hip mass, m = leg mass, I = leg inertia, l = leg length
-%     walker.M = 1.0; walker.m = 0.5; walker.I = 0.02; walker.l = 1.0; walker.w = 0.0; 
-%     walker.c = 0.5; walker.r = 0.1; walker.g = 9.8; walker.gam = 0.13; %% 0.10 0.11 0.12
-%     
-%     %%%% Initial State %%%%%
-%     q1 = 0.2; u1 = -0.3;
-%     q2 = 0.4; u2 = -0.3;
-%     
-%     z0 = [q1 u1 q2 u2];
+    %% M = hip mass, m = leg mass, I = leg inertia, l = leg length
+ 
+    
+    %%%% Initial State %%%%%
+    q1 = 0.2; u1 = -0.3;
+    q2 = 0.4; u2 = -0.3;
+    
+    z0 = [q1 u1 q2 u2];
     %% Root finding will give this stable root 
     %zstar = [0.189472782205104  -0.239124222551699   0.378945564410209  -0.053691703909393];
     %%
@@ -73,42 +62,55 @@ fps = 10; %Use low frames per second for low gravity
 
 %%%% Root finding, Period one gait %%%%
 options = optimset('TolFun',1e-12,'TolX',1e-12,'Display','off');
-[zstar,fval,exitflag] = fsolve(@fixedpt,z0,options,gamma);
+[zstar,fval,exitflag] = fsolve(@fixedpt,z0,options,walker);
 if exitflag == 1
-%     disp('Fixed point:');
-%     disp(zstar);
+    disp('Fixed point:');
+    disp(zstar);
 else
     error('Root finder not converged, change guess or change system parameters')
 end
 
 
 %%% Stability, using eigenvalues of Poincare map %%%
-J=partialder(@onestep,zstar,gamma);
+J=partialder(@onestep,zstar,walker);
 % disp('EigenValues for linearized map are');
 eig(J);
 ramda = eig(J);
 ramda_abs_max = max(abs(real(ramda)));
 if ramda_abs_max <1
+disp('Limitcycle is stable.')
+disp('Motion data will be exported as a CSV file.')
+disp('ramda max value is below↓')
+disp(ramda_abs_max)
+
 %%%% Get data for all the steps %%%
-csv_filename = filenamer(z0,gamma);
-[z,t] = onestep(zstar,gamma,steps);
+% データ保存用csvのファイル名を決定
+    str_q1 = num2str(z0(1));
+    str_u1 = num2str(z0(2));
+    str_gam = num2str(gamma);
+    csv_filename = append('onestep_parameter_',str_q1,'_',str_u1,'_',str_gam,'.csv');
+[z,t] = onestep(zstar,walker,steps);
+onestep_parameter = z;
 out = ('MotionDataResults_ramda');
 csvwrite(fullfile(out,csv_filename),onestep_parameter);  
+end
+
 % for i=1:size(t)
 % fprintf("%.20f %.20f %.20f %.20f %.20f \n",t(i),z(i,1),z(i,2),z(i,3),z(i,4));
 % end
-fprintf("\n");
+% fprintf("\n");
+
 % %%% Animate result %%%
 % disp('Animating...');
-% animate(t,z,gamma,steps,fps);
+% animate(t,z,walker,steps,fps);
 
-%%% Plot data %%%
-disp('Some plots...')
-plot(t,z(:,1),'r',t,z(:,3),'b')
-xlabel('time'); ylabel('Angle (rad)');
-legend('Stance Angle','Swing Angle');
-title('State variables vs time for passive walker');
-end
+% %%% Plot data %%%
+% disp('Some plots...')
+% plot(t,z(:,1),'r',t,z(:,3),'b')
+% xlabel('time'); ylabel('Angle (rad)');
+% legend('Stance Angle','Swing Angle');
+% title('State variables vs time for passive walker');
+%end
 catch
     continue;
 end
@@ -120,7 +122,7 @@ end
 
 %===================================================================
 % データ保存用csvのファイル名を決定
-function csv_filename = filenamer(z0,gamma)
+function csv_filename = filenamer(z0,~)
     str_q1 = num2str(z0(1));
     str_u1 = num2str(z0(2));
     str_gam = num2str(gamma);
@@ -129,23 +131,23 @@ function csv_filename = filenamer(z0,gamma)
 
 
 %===================================================================
-function zdiff=fixedpt(z0,gamma)
+function zdiff=fixedpt(z0,walker)
 %===================================================================
-zdiff=onestep(z0,gamma)-z0; 
+zdiff=onestep(z0,walker)-z0; 
 
 %===================================================================
-function J=partialder(FUN,z,gamma)
+function J=partialder(FUN,z,walker)
 %===================================================================
 pert=1e-5;
 n = length(z);
 J = zeros(n,n);
 
 %%%% Using forward difference, accuracy linear %%%
-% y0=feval(FUN,z,gamma); 
+% y0=feval(FUN,z,walker); 
 % for i=1:n
 %     ztemp=z;
 %     ztemp(i)=ztemp(i)+pert; 
-%     J(:,i)=(feval(FUN,ztemp,gamma)-y0) ;
+%     J(:,i)=(feval(FUN,ztemp,walker)-y0) ;
 % end
 % J=(J/pert);
 
@@ -154,16 +156,17 @@ for i=1:n
     ztemp1=z; ztemp2=z;
     ztemp1(i)=ztemp1(i)+pert; 
     ztemp2(i)=ztemp2(i)-pert; 
-    J(:,i)=(feval(FUN,ztemp1,gamma)-feval(FUN,ztemp2,gamma)) ;
+    J(:,i)=(feval(FUN,ztemp1,walker)-feval(FUN,ztemp2,walker)) ;
 end
 J=J/(2*pert);
 
 %===================================================================
-function [z,t]=onestep(z0,gamma,steps)
+function [z,t]=onestep(z0,walker,steps)
 %===================================================================
 
-    M = 56.0; m = 12.0; I = 0.78; l = 0.84; w = 0.0; 
-    c = 0.425;  r = 0.1; g = 9.8; gam = gamma; 
+M = walker.M;  m = walker.m; I = walker.I;   
+l = walker.l;  c = walker.c; w = walker.w;   
+r = walker.r;  g = walker.g; gam = walker.gam;
 
 flag = 1;
 if nargin<2
@@ -197,9 +200,9 @@ z_ode = z0;
 for i=1:steps
     options=odeset('abstol',1e-13,'reltol',1e-13,'events',@collision);
     tspan = linspace(t0,t0+dt,time_stamps);
-    [t_temp, z_temp] = ode113(@single_stance,tspan,z0,options,gamma);
+    [t_temp, z_temp] = ode113(@single_stance,tspan,z0,options,walker);
     
-    zplus=heelstrike(t_temp(end),z_temp(end,:),gamma); 
+    zplus=heelstrike(t_temp(end),z_temp(end,:),walker); 
     
     z0 = zplus;
     t0 = t_temp(end);
@@ -218,7 +221,7 @@ if flag==1
 end
 
 %===================================================================
-function zdot=single_stance(t,z,gamma)  
+function zdot=single_stance(t,z,walker)  
 %===================================================================
 
 q1 = z(1);   u1 = z(2);                         
@@ -226,15 +229,11 @@ q2 = z(3);   u2 = z(4);
 xh = z(6);  vxh = z(7);                       
 yh = z(8);  vyh = z(9);                     
 
-    M = 56.0; m = 12.0; I = 0.78; l = 0.84; w = 0.0; 
-    c = 0.425;  r = 0.1; g = 9.8; gam = gamma; 
+M = walker.M;  m = walker.m; I = walker.I;   
+l = walker.l;  c = walker.c; w = walker.w;   
+r = walker.r;  g = walker.g; gam = walker.gam;
 
-% External hip torque = th.
-if q1<0
-    Th = 1;
-else
-    Th = 0;
-end
+Th=0;   %external hip torque, if needed               
 
 M11 = -2*w^2*m-2*I+2*m*l*c*cos(q2)+2*m*w*l*sin(q2)-2*m*c^2-2*m*l^2-M*l^2+2*m*l*c-2*m*r^2-M*r^2+2*m*r*c*cos(q1-q2)-2*m*r*w*sin(q1-q2)-2*M*r*l*cos(q1)-4*m*r*l*cos(q1)+2*m*r*c*cos(q1)-2*m*r*w*sin(q1); 
 M12 = w^2*m+I-m*l*c*cos(q2)-m*w*l*sin(q2)+m*c^2-m*r*c*cos(q1-q2)+m*r*w*sin(q1-q2); 
@@ -263,11 +262,12 @@ zdot = [u1 ud1 u2 ud2 ...
         DTE vxh axh vyh ayh]';  
 
 %===================================================================
-function [gstop, isterminal,direction]=collision(t,z,gamma)
+function [gstop, isterminal,direction]=collision(t,z,walker)
 %===================================================================
 
-    M = 56.0; m = 12.0; I = 0.78; l = 0.84; w = 0.0; 
-    c = 0.425;  r = 0.1; g = 9.8; gam = gamma; 
+M = walker.M;  m = walker.m; I = walker.I;   
+l = walker.l;  c = walker.c; w = walker.w;   
+r = walker.r;  g = walker.g; gam = walker.gam; 
 
 q1 = z(1); q2 = z(3); 
 
@@ -280,7 +280,7 @@ end
 direction=-1; % The t_final can be approached by any direction is indicated by the direction
 
 %===================================================================
-function zplus=heelstrike(t,z,gamma)      
+function zplus=heelstrike(t,z,walker)      
 %===================================================================
 
 r1 = z(1);   v1 = z(2);                         
@@ -290,8 +290,9 @@ xh = z(6);   yh = z(8);
 q1 = r1 - r2;                         
 q2 = -r2;                                       
 
-    M = 56.0; m = 12.0; I = 0.78; l = 0.84; w = 0.0; 
-    c = 0.425;  r = 0.1; g = 9.8; gam = gamma; 
+M = walker.M;  m = walker.m; I = walker.I;   
+l = walker.l;  c = walker.c; w = walker.w;   
+r = walker.r;  g = walker.g; gam = walker.gam; 
 
 M11 = 2*m*l^2-2*m*l*c+2*m*c^2+2*m*w^2+2*m*r^2+4*m*r*l*cos(q1)-2*m*r*c*cos(q1)+2*m*w*sin(q1)*r-2*m*l*c*cos(q2)-2*m*l*w*sin(q2)-2*m*r*c*cos(q1-q2)+2*m*sin(q1-q2)*w*r+M*l^2+2*M*r*l*cos(q1)+M*r^2+2*I; 
 M12 = m*l*c*cos(q2)+m*l*w*sin(q2)-m*c^2-m*w^2+m*r*c*cos(q1-q2)-m*sin(q1-q2)*w*r-I; 
@@ -320,7 +321,7 @@ zplus = [q1 u1 q2 u2 TE xh vxh yh vyh];
 
 
 %===================================================================
-function animate(t_all,z_all,gamma,steps,fps)
+function animate(t_all,z_all,walker,steps,fps)
 %===================================================================
 
 %%%% Interpolate linearly using fps %%%%%
@@ -336,8 +337,9 @@ end
 %%%% Now animate the results %%%%%%%
 clf
 
-    M = 56.0; m = 12.0; I = 0.78; l = 0.84; w = 0.0; 
-    c = 0.425;  r = 0.1; g = 9.8; gam = gamma; 
+M = walker.M;  m = walker.m; I = walker.I;   
+l = walker.l;  c = walker.c; w = walker.w;   
+r = walker.r;  g = walker.g; gam = walker.gam; 
 
 mm = size(z,1);
 
